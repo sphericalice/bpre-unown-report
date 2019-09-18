@@ -5,6 +5,6 @@ gLastResult = 0x020370D0;
 gSpecials = 0x0815FD60;
 gTasks = 0x03005090;
 
-vblank_handler_set = 0x080006F4|1;
-set_callback2 = 0x08000544|1;
+SetVBlankCallback = 0x080006F4|1;
+SetMainCallback2 = 0x08000544|1;
 sub_80CD240 = 0x080CD240|1;
