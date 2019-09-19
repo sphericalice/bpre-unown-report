@@ -39,43 +39,6 @@ u8 CurrentKindsOfUnownCaught() {
     return 0;
 }
 
-static u8 GetNextPage(u8 PageNumber) {
-    if (PageNumber == GetTotalPages()) return PageNumber;
-
-    if (PageNumber == 0) {
-        if (CurrentKindsOfUnownCaught() == 0) return 4;
-        if (CurrentKindsOfUnownCaught() > 1) return 1;
-    }
-
-    if (PageNumber == 1) {
-        if (CurrentKindsOfUnownCaught() <= 10) return 4;
-        if (CurrentKindsOfUnownCaught() > 10) return 2;
-    }
-
-    if (PageNumber == 2) {
-        if (CurrentKindsOfUnownCaught() <= 20) return 4;
-        if (CurrentKindsOfUnownCaught() > 20) return 3;
-    }
-
-    return PageNumber + 1;  
-}
-
-static u8 GetPrevPage(u8 PageNumber) {
-    switch (PageNumber) {
-        case 0:
-            return PageNumber;
-    }
-
-    if (PageNumber == 4) {
-        if (CurrentKindsOfUnownCaught() == 0) return 0;
-        if (CurrentKindsOfUnownCaught() <= 10) return 1;
-        if (CurrentKindsOfUnownCaught() <= 20) return 2;
-        if (CurrentKindsOfUnownCaught() > 20) return 3;
-    }
-    
-    return PageNumber - 1;
-}
-
 static void PrintOnUnownReportWindow(void) {
     FillWindowPixelRect(0, PIXEL_FILL(0), 0, 0, 256, 0x90);
     u16 width = 0;
@@ -92,79 +55,126 @@ static void PrintOnUnownReportWindow(void) {
     CopyWindowToVram(0, 3);
 }
 
-static void SwapPage(u8 PageNumber) {
-    u16 width = 0;
-    switch (PageNumber) {
-        case 0:
-        default:
-            StringExpandPlaceholders(gStringVar4, gText_PlayersUnownReport);
-            width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
-            AddTextPrinterParameterized3(0, 2, 0x68 - (width >> 1), 40, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
+#define PAGE_NEXT 0
+#define PAGE_PREV 1
+#define currentPage data[0]
 
-            ConvertIntToDecimalStringN(gStringVar1, CurrentKindsOfUnownCaught(), STR_CONV_MODE_LEFT_ALIGN, 4);
-            StringExpandPlaceholders(gStringVar4, gText_CurrentKinds);
-            width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
-            AddTextPrinterParameterized3(0, 2, 0x68 - (width >> 1), 64, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
-            break;
-        case 1: 
-            AddTextPrinterParameterized3(0, 2, 48, 40, sTextColors[0], TEXT_SPEED_FF, gText_UnownA);
-            AddTextPrinterParameterized3(0, 2, 48, 56, sTextColors[0], TEXT_SPEED_FF, gText_UnownC);
-            AddTextPrinterParameterized3(0, 2, 48, 72, sTextColors[0], TEXT_SPEED_FF, gText_UnownE);
-            AddTextPrinterParameterized3(0, 2, 48, 88, sTextColors[0], TEXT_SPEED_FF, gText_UnownG);
-            AddTextPrinterParameterized3(0, 2, 48, 104, sTextColors[0], TEXT_SPEED_FF, gText_UnownI);
-            
-            AddTextPrinterParameterized3(0, 2, 136, 40, sTextColors[0], TEXT_SPEED_FF, gText_UnownB);
-            AddTextPrinterParameterized3(0, 2, 136, 56, sTextColors[0], TEXT_SPEED_FF, gText_UnownD);
-            AddTextPrinterParameterized3(0, 2, 136, 72, sTextColors[0], TEXT_SPEED_FF, gText_UnownF);
-            AddTextPrinterParameterized3(0, 2, 136, 88, sTextColors[0], TEXT_SPEED_FF, gText_UnownH);
-            AddTextPrinterParameterized3(0, 2, 136, 104, sTextColors[0], TEXT_SPEED_FF, gText_UnownJ);
-            break;
-        case 2:
-            AddTextPrinterParameterized3(0, 2, 48, 40, sTextColors[0], TEXT_SPEED_FF, gText_UnownK);
-            AddTextPrinterParameterized3(0, 2, 48, 56, sTextColors[0], TEXT_SPEED_FF, gText_UnownM);
-            AddTextPrinterParameterized3(0, 2, 48, 72, sTextColors[0], TEXT_SPEED_FF, gText_UnownO);
-            AddTextPrinterParameterized3(0, 2, 48, 88, sTextColors[0], TEXT_SPEED_FF, gText_UnownQ);
-            AddTextPrinterParameterized3(0, 2, 48, 104, sTextColors[0], TEXT_SPEED_FF, gText_UnownS);
-            
-            AddTextPrinterParameterized3(0, 2, 136, 40, sTextColors[0], TEXT_SPEED_FF, gText_UnownL);
-            AddTextPrinterParameterized3(0, 2, 136, 56, sTextColors[0], TEXT_SPEED_FF, gText_UnownN);
-            AddTextPrinterParameterized3(0, 2, 136, 72, sTextColors[0], TEXT_SPEED_FF, gText_UnownP);
-            AddTextPrinterParameterized3(0, 2, 136, 88, sTextColors[0], TEXT_SPEED_FF, gText_UnownR);
-            AddTextPrinterParameterized3(0, 2, 136, 104, sTextColors[0], TEXT_SPEED_FF, gText_UnownT);
-            break;
-        case 3:
-            AddTextPrinterParameterized3(0, 2, 48, 40, sTextColors[0], TEXT_SPEED_FF, gText_UnownU);
-            AddTextPrinterParameterized3(0, 2, 48, 56, sTextColors[0], TEXT_SPEED_FF, gText_UnownW);
-            AddTextPrinterParameterized3(0, 2, 48, 72, sTextColors[0], TEXT_SPEED_FF, gText_UnownY);
-            AddTextPrinterParameterized3(0, 2, 48, 88, sTextColors[0], TEXT_SPEED_FF, gText_UnownQuestionMark);
-            
-            AddTextPrinterParameterized3(0, 2, 136, 40, sTextColors[0], TEXT_SPEED_FF, gText_UnownV);
-            AddTextPrinterParameterized3(0, 2, 136, 56, sTextColors[0], TEXT_SPEED_FF, gText_UnownX);
-            AddTextPrinterParameterized3(0, 2, 136, 72, sTextColors[0], TEXT_SPEED_FF, gText_UnownZ);
-            AddTextPrinterParameterized3(0, 2, 136, 88, sTextColors[0], TEXT_SPEED_FF, gText_UnownExclamationMark);
-            break;
-        case 4:
-            AddTextPrinterParameterized3(0, 2, 16, 40, sTextColors[0], TEXT_SPEED_FF, gText_Report1);
-            break;
-        case 5:
-            AddTextPrinterParameterized3(0, 2, 16, 40, sTextColors[0], TEXT_SPEED_FF, gText_Report2);
-            break;
-        case 6:
-            AddTextPrinterParameterized3(0, 2, 16, 40, sTextColors[0], TEXT_SPEED_FF, gText_Report3);
-            break;
-        case 7:
-            AddTextPrinterParameterized3(0, 2, 16, 40, sTextColors[0], TEXT_SPEED_FF, gText_Report4);
-            break;
-        case 8:
-            AddTextPrinterParameterized3(0, 2, 16, 40, sTextColors[0], TEXT_SPEED_FF, gText_Report5);
-            break;
-        case 9:
-            AddTextPrinterParameterized3(0, 2, 16, 40, sTextColors[0], TEXT_SPEED_FF, gText_Report6);
-            break;
+static u8 GetPage(u8 PageNumber, u8 SwapDirection) {
+    if (SwapDirection == PAGE_NEXT) {
+        if (PageNumber == GetTotalPages()) return PageNumber;
+        if (PageNumber == 0) {
+            if (CurrentKindsOfUnownCaught() == 0) return 4;
+            if (CurrentKindsOfUnownCaught() > 1) return 1;
+        }
+        if (PageNumber == 1) {
+            if (CurrentKindsOfUnownCaught() <= 10) return 4;
+            if (CurrentKindsOfUnownCaught() > 10) return 2;
+        }
+        if (PageNumber == 2) {
+            if (CurrentKindsOfUnownCaught() <= 20) return 4;
+            if (CurrentKindsOfUnownCaught() > 20) return 3;
+        }
+        return PageNumber + 1;
+    }
+    if (SwapDirection == PAGE_PREV) {
+        if (PageNumber == 0) return PageNumber;
+        if (PageNumber == 4) {
+            if (CurrentKindsOfUnownCaught() == 0) return 0;
+            if (CurrentKindsOfUnownCaught() <= 10) return 1;
+            if (CurrentKindsOfUnownCaught() <= 20) return 2;
+            if (CurrentKindsOfUnownCaught() > 20) return 3;
+        }        
+        return PageNumber - 1;
+    }
+    return PageNumber;
+}
+
+static void SwapPage(u8 taskId, u8 SwapDirection) {
+    struct Task *task = &gTasks[taskId];
+    s8 PageNumber = -1;
+
+    if (GetPage(task->currentPage, SwapDirection) != task->currentPage) {
+        task->currentPage = GetPage(task->currentPage, SwapDirection);            
+        FillWindowPixelBuffer(0, 0);
+        ClearWindowTilemap(0);
+        CopyWindowToVram(0, 3);
+        PageNumber = task->currentPage;
     }
 
-    PutWindowTilemap(0);
-    CopyWindowToVram(0, 3);
+    if (PageNumber != -1) {
+        u16 width = 0;
+        switch (PageNumber) {
+            case 0:
+                StringExpandPlaceholders(gStringVar4, gText_PlayersUnownReport);
+                width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
+                AddTextPrinterParameterized3(0, 2, 0x68 - (width >> 1), 40, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
+
+                ConvertIntToDecimalStringN(gStringVar1, CurrentKindsOfUnownCaught(), STR_CONV_MODE_LEFT_ALIGN, 4);
+                StringExpandPlaceholders(gStringVar4, gText_CurrentKinds);
+                width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
+                AddTextPrinterParameterized3(0, 2, 0x68 - (width >> 1), 64, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
+                break;
+            case 1: 
+                AddTextPrinterParameterized3(0, 2, 48, 40, sTextColors[0], TEXT_SPEED_FF, gText_UnownA);
+                AddTextPrinterParameterized3(0, 2, 48, 56, sTextColors[0], TEXT_SPEED_FF, gText_UnownC);
+                AddTextPrinterParameterized3(0, 2, 48, 72, sTextColors[0], TEXT_SPEED_FF, gText_UnownE);
+                AddTextPrinterParameterized3(0, 2, 48, 88, sTextColors[0], TEXT_SPEED_FF, gText_UnownG);
+                AddTextPrinterParameterized3(0, 2, 48, 104, sTextColors[0], TEXT_SPEED_FF, gText_UnownI);
+                
+                AddTextPrinterParameterized3(0, 2, 136, 40, sTextColors[0], TEXT_SPEED_FF, gText_UnownB);
+                AddTextPrinterParameterized3(0, 2, 136, 56, sTextColors[0], TEXT_SPEED_FF, gText_UnownD);
+                AddTextPrinterParameterized3(0, 2, 136, 72, sTextColors[0], TEXT_SPEED_FF, gText_UnownF);
+                AddTextPrinterParameterized3(0, 2, 136, 88, sTextColors[0], TEXT_SPEED_FF, gText_UnownH);
+                AddTextPrinterParameterized3(0, 2, 136, 104, sTextColors[0], TEXT_SPEED_FF, gText_UnownJ);
+                break;
+            case 2:
+                AddTextPrinterParameterized3(0, 2, 48, 40, sTextColors[0], TEXT_SPEED_FF, gText_UnownK);
+                AddTextPrinterParameterized3(0, 2, 48, 56, sTextColors[0], TEXT_SPEED_FF, gText_UnownM);
+                AddTextPrinterParameterized3(0, 2, 48, 72, sTextColors[0], TEXT_SPEED_FF, gText_UnownO);
+                AddTextPrinterParameterized3(0, 2, 48, 88, sTextColors[0], TEXT_SPEED_FF, gText_UnownQ);
+                AddTextPrinterParameterized3(0, 2, 48, 104, sTextColors[0], TEXT_SPEED_FF, gText_UnownS);
+                
+                AddTextPrinterParameterized3(0, 2, 136, 40, sTextColors[0], TEXT_SPEED_FF, gText_UnownL);
+                AddTextPrinterParameterized3(0, 2, 136, 56, sTextColors[0], TEXT_SPEED_FF, gText_UnownN);
+                AddTextPrinterParameterized3(0, 2, 136, 72, sTextColors[0], TEXT_SPEED_FF, gText_UnownP);
+                AddTextPrinterParameterized3(0, 2, 136, 88, sTextColors[0], TEXT_SPEED_FF, gText_UnownR);
+                AddTextPrinterParameterized3(0, 2, 136, 104, sTextColors[0], TEXT_SPEED_FF, gText_UnownT);
+                break;
+            case 3:
+                AddTextPrinterParameterized3(0, 2, 48, 40, sTextColors[0], TEXT_SPEED_FF, gText_UnownU);
+                AddTextPrinterParameterized3(0, 2, 48, 56, sTextColors[0], TEXT_SPEED_FF, gText_UnownW);
+                AddTextPrinterParameterized3(0, 2, 48, 72, sTextColors[0], TEXT_SPEED_FF, gText_UnownY);
+                AddTextPrinterParameterized3(0, 2, 48, 88, sTextColors[0], TEXT_SPEED_FF, gText_UnownQuestionMark);
+                
+                AddTextPrinterParameterized3(0, 2, 136, 40, sTextColors[0], TEXT_SPEED_FF, gText_UnownV);
+                AddTextPrinterParameterized3(0, 2, 136, 56, sTextColors[0], TEXT_SPEED_FF, gText_UnownX);
+                AddTextPrinterParameterized3(0, 2, 136, 72, sTextColors[0], TEXT_SPEED_FF, gText_UnownZ);
+                AddTextPrinterParameterized3(0, 2, 136, 88, sTextColors[0], TEXT_SPEED_FF, gText_UnownExclamationMark);
+                break;
+            case 4:
+                AddTextPrinterParameterized3(0, 2, 16, 40, sTextColors[0], TEXT_SPEED_FF, gText_Report1);
+                break;
+            case 5:
+                AddTextPrinterParameterized3(0, 2, 16, 40, sTextColors[0], TEXT_SPEED_FF, gText_Report2);
+                break;
+            case 6:
+                AddTextPrinterParameterized3(0, 2, 16, 40, sTextColors[0], TEXT_SPEED_FF, gText_Report3);
+                break;
+            case 7:
+                AddTextPrinterParameterized3(0, 2, 16, 40, sTextColors[0], TEXT_SPEED_FF, gText_Report4);
+                break;
+            case 8:
+                AddTextPrinterParameterized3(0, 2, 16, 40, sTextColors[0], TEXT_SPEED_FF, gText_Report5);
+                break;
+            case 9:
+                AddTextPrinterParameterized3(0, 2, 16, 40, sTextColors[0], TEXT_SPEED_FF, gText_Report6);
+                break;
+        }
+
+        PlaySE(SE_SELECT);
+        PutWindowTilemap(0);
+        CopyWindowToVram(0, 3);
+    }
 }
 
 u8 *sTilemapBuffer;
@@ -247,7 +257,7 @@ static void VblankCB_UnownReport(void) {
     TransferPlttBuffer();
 }
 
-static void RemoveTrainerHillRecordsWindow(u8 windowId) {
+static void RemoveUnownReportWindow(u8 windowId) {
     FillWindowPixelBuffer(windowId, PIXEL_FILL(0));
     ClearWindowTilemap(windowId);
     CopyWindowToVram(windowId, 2);
@@ -259,7 +269,7 @@ static void Task_ExitUnownReport(u8 taskId) {
     {
         SetMainCallback2(CB2_ReturnToFieldContinueScriptPlayMapMusic);
         Free(sTilemapBuffer);
-        RemoveTrainerHillRecordsWindow(0);
+        RemoveUnownReportWindow(0);
         FreeAllWindowBuffers();
         DestroyTask(taskId);
     }
@@ -275,25 +285,11 @@ static void Task_CheckUnownReportInput(u8 taskId) {
 
     if (gMain.newAndRepeatedKeys & DPAD_RIGHT || gMain.newAndRepeatedKeys & DPAD_DOWN)
     {
-        if (GetNextPage(task->data[0]) != task->data[0]) {
-            PlaySE(SE_SELECT);
-            task->data[0] = GetNextPage(task->data[0]);            
-            FillWindowPixelBuffer(0, 0);
-            ClearWindowTilemap(0);
-            CopyWindowToVram(0, 3);
-            SwapPage(task->data[0]);                
-        }
+        SwapPage(taskId, PAGE_NEXT);
     }
     
-    if (gMain.newAndRepeatedKeys & DPAD_LEFT || gMain.newAndRepeatedKeys & DPAD_UP) {        
-        if (GetPrevPage(task->data[0]) != task->data[0]) {
-            PlaySE(SE_SELECT);
-            task->data[0] = GetPrevPage(task->data[0]);            
-            FillWindowPixelBuffer(0, 0);
-            ClearWindowTilemap(0);
-            CopyWindowToVram(0, 3);
-            SwapPage(task->data[0]);                
-        }
+    if (gMain.newAndRepeatedKeys & DPAD_LEFT || gMain.newAndRepeatedKeys & DPAD_UP) {      
+        SwapPage(taskId, PAGE_PREV);
     }
     
     if (gMain.newKeys & B_BUTTON) {
