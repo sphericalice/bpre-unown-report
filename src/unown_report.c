@@ -31,23 +31,43 @@ static const u8 sTextColors[2][3] =
 
 const u8 gText_PlayersUnownReport[] = _("{PLAYER}'s UNOWN Report");
 const u8 gText_CurrentKinds[] = _("Number of UNOWN\nCurrent Kinds: {STR_VAR_1}");
+const u8 gText_UnownA[] = _("ANGER");
+const u8 gText_UnownB[] = _("BANGER");
 
 static u16 CurrentKindsOfUnown() {
     // TODO: Actually count the kinds of Unown the player has caught
-    return 28;
+    return 1;
 }
 
-static void PrintOnUnownReportWindow() {
+static u8 GetTotalPages() {
+    return 3;
+}
+
+static void PrintOnUnownReportWindow(u8 PageNumber) {
     FillWindowPixelRect(0, PIXEL_FILL(0), 0, 0, 0xD8, 0x90);
+    u16 width = 0;
+    switch (PageNumber) {
+        case 0:
+        default:
+            StringExpandPlaceholders(gStringVar4, gText_PlayersUnownReport);
+            width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
+            AddTextPrinterParameterized3(0, 2, 0x68 - (width >> 1), 40, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
 
-    StringExpandPlaceholders(gStringVar4, gText_PlayersUnownReport);
-    u16 width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
-    AddTextPrinterParameterized3(0, 2, 0x68 - (width >> 1), 40, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
+            ConvertIntToDecimalStringN(gStringVar1, CurrentKindsOfUnown(), STR_CONV_MODE_LEFT_ALIGN, 4);
+            StringExpandPlaceholders(gStringVar4, gText_CurrentKinds);
+            width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
+            AddTextPrinterParameterized3(0, 2, 0x68 - (width >> 1), 64, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
 
-    ConvertIntToDecimalStringN(gStringVar1, CurrentKindsOfUnown(), STR_CONV_MODE_LEFT_ALIGN, 4);
-    StringExpandPlaceholders(gStringVar4, gText_CurrentKinds);
-    width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
-    AddTextPrinterParameterized3(0, 2, 0x68 - (width >> 1), 64, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
+            break;
+        case 1:
+            StringExpandPlaceholders(gStringVar4, gText_UnownA);
+            AddTextPrinterParameterized3(0, 2, 0x24, 40, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
+            break;
+        case 2:
+            StringExpandPlaceholders(gStringVar4, gText_UnownB);
+            AddTextPrinterParameterized3(0, 2, 0x24, 40, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
+            break;
+    }
 
     PutWindowTilemap(0);
     CopyWindowToVram(0, 3);
@@ -176,10 +196,15 @@ static void Task_BeginPaletteFade(u8 taskId) {
     gTasks[taskId].func = Task_ExitUnownReport;
 }
 
-static void Task_CloseUnownReportOnButton(u8 taskId) {
+static void Task_CheckUnownReportInput(u8 taskId) {
     struct Task *task = &gTasks[taskId];
 
-    if (gMain.newKeys & A_BUTTON || gMain.newKeys & B_BUTTON)
+    if (gMain.newKeys & A_BUTTON && gTasks[taskId].data[0] < GetTotalPages() - 1)
+    {
+        PlaySE(SE_SELECT);
+        gTasks[taskId].data[0]++;
+        PrintOnUnownReportWindow(gTasks[taskId].data[0]);
+    } else if (gMain.newKeys & A_BUTTON || gMain.newKeys & B_BUTTON)
     {
         PlaySE(SE_SELECT);
         task->func = Task_BeginPaletteFade;
@@ -188,7 +213,7 @@ static void Task_CloseUnownReportOnButton(u8 taskId) {
 
 static void Task_UnownReportWaitForPaletteFade(u8 taskId) {
     if (!gPaletteFade.active)
-        gTasks[taskId].func = Task_CloseUnownReportOnButton;
+        gTasks[taskId].func = Task_CheckUnownReportInput;
 }
 
 static void MainCB2_UnownReport(void) {
@@ -244,7 +269,7 @@ void CB2_UnownReport() {
             case 7:
                 SetDispcntReg();
                 SetVBlankCallback(VblankCB_UnownReport);
-                PrintOnUnownReportWindow();
+                PrintOnUnownReportWindow(0);
                 CreateTask(Task_UnownReportWaitForPaletteFade, 8);
                 SetMainCallback2(MainCB2_UnownReport);
                 gMain.state = 0;
