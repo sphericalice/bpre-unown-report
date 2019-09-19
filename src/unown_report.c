@@ -19,6 +19,7 @@
 #include "string_util.h"
 #include "international_string_util.h"
 #include "strings.h"
+#include "pokemon_icon.h"
 #include "constants/songs.h"
 #include "graphics/unown.c"
 #include <stddef.h>
@@ -29,22 +30,69 @@ static const u8 sTextColors[2][3] =
     {15, 14, 13}
 };
 
-const u8 gText_PlayersUnownReport[] = _("{PLAYER}'s UNOWN Report");
-const u8 gText_CurrentKinds[] = _("Number of UNOWN\nCurrent Kinds: {STR_VAR_1}");
-const u8 gText_UnownA[] = _("ANGER");
-const u8 gText_UnownB[] = _("BANGER");
+u8 GetTotalPages() {
+    return 9;
+}
 
-static u16 CurrentKindsOfUnown() {
+u8 CurrentKindsOfUnownCaught() {
     // TODO: Actually count the kinds of Unown the player has caught
-    return 1;
+    return 0;
 }
 
-static u8 GetTotalPages() {
-    return 3;
+static u8 GetNextPage(u8 PageNumber) {
+    if (PageNumber == GetTotalPages()) return PageNumber;
+
+    if (PageNumber == 0) {
+        if (CurrentKindsOfUnownCaught() == 0) return 4;
+        if (CurrentKindsOfUnownCaught() > 1) return 1;
+    }
+
+    if (PageNumber == 1) {
+        if (CurrentKindsOfUnownCaught() <= 10) return 4;
+        if (CurrentKindsOfUnownCaught() > 10) return 2;
+    }
+
+    if (PageNumber == 2) {
+        if (CurrentKindsOfUnownCaught() <= 20) return 4;
+        if (CurrentKindsOfUnownCaught() > 20) return 3;
+    }
+
+    return PageNumber + 1;  
 }
 
-static void PrintOnUnownReportWindow(u8 PageNumber) {
-    FillWindowPixelRect(0, PIXEL_FILL(0), 0, 0, 0xD8, 0x90);
+static u8 GetPrevPage(u8 PageNumber) {
+    switch (PageNumber) {
+        case 0:
+            return PageNumber;
+    }
+
+    if (PageNumber == 4) {
+        if (CurrentKindsOfUnownCaught() == 0) return 0;
+        if (CurrentKindsOfUnownCaught() <= 10) return 1;
+        if (CurrentKindsOfUnownCaught() <= 20) return 2;
+        if (CurrentKindsOfUnownCaught() > 20) return 3;
+    }
+    
+    return PageNumber - 1;
+}
+
+static void PrintOnUnownReportWindow(void) {
+    FillWindowPixelRect(0, PIXEL_FILL(0), 0, 0, 256, 0x90);
+    u16 width = 0;
+    StringExpandPlaceholders(gStringVar4, gText_PlayersUnownReport);
+    width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
+    AddTextPrinterParameterized3(0, 2, 0x68 - (width >> 1), 40, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
+
+    ConvertIntToDecimalStringN(gStringVar1, CurrentKindsOfUnownCaught(), STR_CONV_MODE_LEFT_ALIGN, 4);
+    StringExpandPlaceholders(gStringVar4, gText_CurrentKinds);
+    width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
+    AddTextPrinterParameterized3(0, 2, 0x68 - (width >> 1), 64, sTextColors[0], TEXT_SPEED_FF, gStringVar4);    
+
+    PutWindowTilemap(0);
+    CopyWindowToVram(0, 3);
+}
+
+static void SwapPage(u8 PageNumber) {
     u16 width = 0;
     switch (PageNumber) {
         case 0:
@@ -53,19 +101,65 @@ static void PrintOnUnownReportWindow(u8 PageNumber) {
             width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
             AddTextPrinterParameterized3(0, 2, 0x68 - (width >> 1), 40, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
 
-            ConvertIntToDecimalStringN(gStringVar1, CurrentKindsOfUnown(), STR_CONV_MODE_LEFT_ALIGN, 4);
+            ConvertIntToDecimalStringN(gStringVar1, CurrentKindsOfUnownCaught(), STR_CONV_MODE_LEFT_ALIGN, 4);
             StringExpandPlaceholders(gStringVar4, gText_CurrentKinds);
             width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
             AddTextPrinterParameterized3(0, 2, 0x68 - (width >> 1), 64, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
-
             break;
-        case 1:
-            StringExpandPlaceholders(gStringVar4, gText_UnownA);
-            AddTextPrinterParameterized3(0, 2, 0x24, 40, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
+        case 1: 
+            AddTextPrinterParameterized3(0, 2, 48, 40, sTextColors[0], TEXT_SPEED_FF, gText_UnownA);
+            AddTextPrinterParameterized3(0, 2, 48, 56, sTextColors[0], TEXT_SPEED_FF, gText_UnownC);
+            AddTextPrinterParameterized3(0, 2, 48, 72, sTextColors[0], TEXT_SPEED_FF, gText_UnownE);
+            AddTextPrinterParameterized3(0, 2, 48, 88, sTextColors[0], TEXT_SPEED_FF, gText_UnownG);
+            AddTextPrinterParameterized3(0, 2, 48, 104, sTextColors[0], TEXT_SPEED_FF, gText_UnownI);
+            
+            AddTextPrinterParameterized3(0, 2, 136, 40, sTextColors[0], TEXT_SPEED_FF, gText_UnownB);
+            AddTextPrinterParameterized3(0, 2, 136, 56, sTextColors[0], TEXT_SPEED_FF, gText_UnownD);
+            AddTextPrinterParameterized3(0, 2, 136, 72, sTextColors[0], TEXT_SPEED_FF, gText_UnownF);
+            AddTextPrinterParameterized3(0, 2, 136, 88, sTextColors[0], TEXT_SPEED_FF, gText_UnownH);
+            AddTextPrinterParameterized3(0, 2, 136, 104, sTextColors[0], TEXT_SPEED_FF, gText_UnownJ);
             break;
         case 2:
-            StringExpandPlaceholders(gStringVar4, gText_UnownB);
-            AddTextPrinterParameterized3(0, 2, 0x24, 40, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
+            AddTextPrinterParameterized3(0, 2, 48, 40, sTextColors[0], TEXT_SPEED_FF, gText_UnownK);
+            AddTextPrinterParameterized3(0, 2, 48, 56, sTextColors[0], TEXT_SPEED_FF, gText_UnownM);
+            AddTextPrinterParameterized3(0, 2, 48, 72, sTextColors[0], TEXT_SPEED_FF, gText_UnownO);
+            AddTextPrinterParameterized3(0, 2, 48, 88, sTextColors[0], TEXT_SPEED_FF, gText_UnownQ);
+            AddTextPrinterParameterized3(0, 2, 48, 104, sTextColors[0], TEXT_SPEED_FF, gText_UnownS);
+            
+            AddTextPrinterParameterized3(0, 2, 136, 40, sTextColors[0], TEXT_SPEED_FF, gText_UnownL);
+            AddTextPrinterParameterized3(0, 2, 136, 56, sTextColors[0], TEXT_SPEED_FF, gText_UnownN);
+            AddTextPrinterParameterized3(0, 2, 136, 72, sTextColors[0], TEXT_SPEED_FF, gText_UnownP);
+            AddTextPrinterParameterized3(0, 2, 136, 88, sTextColors[0], TEXT_SPEED_FF, gText_UnownR);
+            AddTextPrinterParameterized3(0, 2, 136, 104, sTextColors[0], TEXT_SPEED_FF, gText_UnownT);
+            break;
+        case 3:
+            AddTextPrinterParameterized3(0, 2, 48, 40, sTextColors[0], TEXT_SPEED_FF, gText_UnownU);
+            AddTextPrinterParameterized3(0, 2, 48, 56, sTextColors[0], TEXT_SPEED_FF, gText_UnownW);
+            AddTextPrinterParameterized3(0, 2, 48, 72, sTextColors[0], TEXT_SPEED_FF, gText_UnownY);
+            AddTextPrinterParameterized3(0, 2, 48, 88, sTextColors[0], TEXT_SPEED_FF, gText_UnownQuestionMark);
+            
+            AddTextPrinterParameterized3(0, 2, 136, 40, sTextColors[0], TEXT_SPEED_FF, gText_UnownV);
+            AddTextPrinterParameterized3(0, 2, 136, 56, sTextColors[0], TEXT_SPEED_FF, gText_UnownX);
+            AddTextPrinterParameterized3(0, 2, 136, 72, sTextColors[0], TEXT_SPEED_FF, gText_UnownZ);
+            AddTextPrinterParameterized3(0, 2, 136, 88, sTextColors[0], TEXT_SPEED_FF, gText_UnownExclamationMark);
+            break;
+        case 4:
+            AddTextPrinterParameterized3(0, 2, 16, 40, sTextColors[0], TEXT_SPEED_FF, gText_Report1);
+            break;
+        case 5:
+            AddTextPrinterParameterized3(0, 2, 16, 40, sTextColors[0], TEXT_SPEED_FF, gText_Report2);
+            break;
+        case 6:
+            AddTextPrinterParameterized3(0, 2, 16, 40, sTextColors[0], TEXT_SPEED_FF, gText_Report3);
+            break;
+        case 7:
+            AddTextPrinterParameterized3(0, 2, 16, 40, sTextColors[0], TEXT_SPEED_FF, gText_Report4);
+            break;
+        case 8:
+            AddTextPrinterParameterized3(0, 2, 16, 40, sTextColors[0], TEXT_SPEED_FF, gText_Report5);
+            break;
+        case 9:
+            AddTextPrinterParameterized3(0, 2, 16, 40, sTextColors[0], TEXT_SPEED_FF, gText_Report6);
             break;
     }
 
@@ -74,27 +168,7 @@ static void PrintOnUnownReportWindow(u8 PageNumber) {
 }
 
 u8 *sTilemapBuffer;
-static const struct BgTemplate sUnownReportBgTemplates[] =
-{
-    {
-        .bg = 0,
-        .charBaseIndex = 0,
-        .mapBaseIndex = 31,
-        .screenSize = 0,
-        .paletteMode = 0,
-        .priority = 0,
-        .baseTile = 0
-    },
-    {
-        .bg = 3,
-        .charBaseIndex = 1,
-        .mapBaseIndex = 30,
-        .screenSize = 0,
-        .paletteMode = 0,
-        .priority = 3,
-        .baseTile = 0
-    }
-};
+static const struct BgTemplate sUnownReportBgTemplates[] = { { 0, 0, 31, 0, 0, 0, 0 }, { 3, 1, 30, 0, 0, 3, 0 } };
 
 static const struct WindowTemplate sUnownReportWindowTemplates[] =
 {
@@ -199,14 +273,30 @@ static void Task_BeginPaletteFade(u8 taskId) {
 static void Task_CheckUnownReportInput(u8 taskId) {
     struct Task *task = &gTasks[taskId];
 
-    if (gMain.newKeys & A_BUTTON && gTasks[taskId].data[0] < GetTotalPages() - 1)
+    if (gMain.newAndRepeatedKeys & DPAD_RIGHT || gMain.newAndRepeatedKeys & DPAD_DOWN)
     {
-        PlaySE(SE_SELECT);
-        gTasks[taskId].data[0]++;
-        PrintOnUnownReportWindow(gTasks[taskId].data[0]);
-    } else if (gMain.newKeys & A_BUTTON || gMain.newKeys & B_BUTTON)
-    {
-        PlaySE(SE_SELECT);
+        if (GetNextPage(task->data[0]) != task->data[0]) {
+            PlaySE(SE_SELECT);
+            task->data[0] = GetNextPage(task->data[0]);            
+            FillWindowPixelBuffer(0, 0);
+            ClearWindowTilemap(0);
+            CopyWindowToVram(0, 3);
+            SwapPage(task->data[0]);                
+        }
+    }
+    
+    if (gMain.newAndRepeatedKeys & DPAD_LEFT || gMain.newAndRepeatedKeys & DPAD_UP) {        
+        if (GetPrevPage(task->data[0]) != task->data[0]) {
+            PlaySE(SE_SELECT);
+            task->data[0] = GetPrevPage(task->data[0]);            
+            FillWindowPixelBuffer(0, 0);
+            ClearWindowTilemap(0);
+            CopyWindowToVram(0, 3);
+            SwapPage(task->data[0]);                
+        }
+    }
+    
+    if (gMain.newKeys & B_BUTTON) {
         task->func = Task_BeginPaletteFade;
     }
 }
@@ -269,7 +359,7 @@ void CB2_UnownReport() {
             case 7:
                 SetDispcntReg();
                 SetVBlankCallback(VblankCB_UnownReport);
-                PrintOnUnownReportWindow(0);
+                PrintOnUnownReportWindow();
                 CreateTask(Task_UnownReportWaitForPaletteFade, 8);
                 SetMainCallback2(MainCB2_UnownReport);
                 gMain.state = 0;
