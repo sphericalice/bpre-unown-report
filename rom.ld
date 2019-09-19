@@ -57,3 +57,4 @@ AddTextPrinterParameterized3 = 0x0812E51C|1;
 PutWindowTilemap = 0x08003FA0|1;
 StringCopy = 0x08008D84|1;
 GetStringCenterAlignXOffset = 0x08005ED4|1;
+LZ77UnCompVram = 0x081E3B6C|1;

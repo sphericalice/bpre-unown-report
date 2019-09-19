@@ -20,6 +20,7 @@
 #include "international_string_util.h"
 #include "strings.h"
 #include "constants/songs.h"
+#include "graphics/unown.c"
 #include <stddef.h>
 
 static const u8 sTextColors[2][3] =
@@ -34,7 +35,7 @@ static void PrintOnUnownReportWindow() {
     FillWindowPixelRect(0, PIXEL_FILL(0), 0, 0, 0xd8, 0x90);
     StringExpandPlaceholders(gStringVar4, gText_PlayerName);
     u16 width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
-    AddTextPrinterParameterized3(0, 2, 0x68 - (width >> 1), 16, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
+    AddTextPrinterParameterized3(0, 2, 0x68 - (width >> 1), 40, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
     PutWindowTilemap(0);
     CopyWindowToVram(0, 3);
 }
@@ -128,14 +129,9 @@ static void ResetBgCoordinates(void) {
 }
 
 static void LoadUnownReportWindowGfx(u8 bgId) {
-    // LoadBgTiles(bgId, sUnownReportWindowTileset, sizeof(sUnownReportWindowTileset), 0);
-    // CopyToBgTilemapBufferRect(bgId, sUnownReportWindowTilemap, 0, 0, 0x20, 0x20);
-    // LoadPalette(sUnownReportWindowPalette, 0, 0x20);
-    
-    // Use the Trainer Tower battle record gfx for now
-    LoadBgTiles(bgId, (int *)0x83f6388, 192, 0);
-    CopyToBgTilemapBufferRect(bgId, (int *)0x83f6468, 0, 0, 0x20, 0x20);
-    LoadPalette((int *)0x83f6448, 0, 0x20);
+    LoadBgTiles(bgId, unownTiles, sizeof(unownTiles), 0);
+    CopyToBgTilemapBufferRect(bgId, unownMap, 0,0, 0x20, 0x20);
+    LoadPalette(unownPal, 0, 0x20);
 }
 
 static void VblankCB_UnownReport(void) {
