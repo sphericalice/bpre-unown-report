@@ -29,13 +29,26 @@ static const u8 sTextColors[2][3] =
     {15, 14, 13}
 };
 
-const u8 gText_PlayerName[] = _("{PLAYER}'s UNOWN Report");
+const u8 gText_PlayersUnownReport[] = _("{PLAYER}'s UNOWN Report");
+const u8 gText_CurrentKinds[] = _("Number of UNOWN\nCurrent Kinds: {STR_VAR_1}");
+
+static u16 CurrentKindsOfUnown() {
+    // TODO: Actually count the kinds of Unown the player has caught
+    return 28;
+}
 
 static void PrintOnUnownReportWindow() {
-    FillWindowPixelRect(0, PIXEL_FILL(0), 0, 0, 0xd8, 0x90);
-    StringExpandPlaceholders(gStringVar4, gText_PlayerName);
+    FillWindowPixelRect(0, PIXEL_FILL(0), 0, 0, 0xD8, 0x90);
+
+    StringExpandPlaceholders(gStringVar4, gText_PlayersUnownReport);
     u16 width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
     AddTextPrinterParameterized3(0, 2, 0x68 - (width >> 1), 40, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
+
+    ConvertIntToDecimalStringN(gStringVar1, CurrentKindsOfUnown(), STR_CONV_MODE_LEFT_ALIGN, 4);
+    StringExpandPlaceholders(gStringVar4, gText_CurrentKinds);
+    width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
+    AddTextPrinterParameterized3(0, 2, 0x68 - (width >> 1), 64, sTextColors[0], TEXT_SPEED_FF, gStringVar4);
+
     PutWindowTilemap(0);
     CopyWindowToVram(0, 3);
 }
