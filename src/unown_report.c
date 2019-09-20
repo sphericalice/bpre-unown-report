@@ -1,24 +1,12 @@
 #include "unown_report.h"
 
-static void MainCB2(void);
-static void Task_UnownReportFadeIn(u8);
-static void Task_UnownReportWaitForKeyPress(u8);
-static void Task_UnownReportFadeOut(u8);
-static void DisplayUnownReportText(void);
-static void DisplayUnownIcon(u8 form, u16 x, u16 y);
-static void InitUnownReportBg(void);
-static void InitUnownReportWindow(void);
-static void PrintUnownReportText(u8 *, u8, u8);
-
-static void VBlankCB(void)
-{
+static void VBlankCB(void) {
     LoadOam();
     ProcessSpriteCopyRequests();
     TransferPlttBuffer();
 }
 
-void CB2_ShowUnownReport(void)
-{
+void CB2_ShowUnownReport(void) {
     SetVBlankCallback(NULL);
     SetGpuReg(REG_OFFSET_DISPCNT, DISPCNT_MODE_0);
     SetGpuReg(REG_OFFSET_BG3CNT, DISPCNT_MODE_0);
@@ -33,7 +21,6 @@ void CB2_ShowUnownReport(void)
     SetGpuReg(REG_OFFSET_BG1VOFS, DISPCNT_MODE_0);
     SetGpuReg(REG_OFFSET_BG0HOFS, DISPCNT_MODE_0);
     SetGpuReg(REG_OFFSET_BG0VOFS, DISPCNT_MODE_0);
-    // why doesn't this one use the dma manager either?
     DmaFill16(3, 0, VRAM, VRAM_SIZE);
     DmaFill32(3, 0, OAM, OAM_SIZE);
     DmaFill16(3, 0, PLTT, PLTT_SIZE);
@@ -61,16 +48,14 @@ void CB2_ShowUnownReport(void)
     CreateTask(Task_UnownReportFadeIn, 0);
 }
 
-static void MainCB2(void)
-{
+static void MainCB2(void) {
     RunTasks();
     AnimateSprites();
     BuildOamBuffer();
     UpdatePaletteFade();
 }
 
-static void Task_UnownReportFadeIn(u8 taskId)
-{
+static void Task_UnownReportFadeIn(u8 taskId) {
     if (!gPaletteFade.active)
         gTasks[taskId].func = Task_UnownReportWaitForKeyPress;
 }
@@ -135,16 +120,22 @@ static void PrintFirstPage() {
     PrintUnownReportText(gStringVar4, 0x68 - (width >> 1), 64);
 }
 
-static void DisplayUnownIcon(u8 form, u16 x, u16 y)
-{
+static u32 UnownFormToPID(u8 form) {
+    // In Generation III, Unown's form is determined by the composite value of
+    // the least significant 2 bits of each byte in its PID, so we need to
+    // "reverse engineer" this PID for the wanted Unown icon
+    return ((form & 0b00110000) << 12) | ((form & 0b00001100) << 6) | (form & 0b00000011);
+}
+
+static void DisplayUnownIcon(u8 form, u16 x, u16 y) {
     u8 spriteId;
     LoadMonIconPalettes();
-    spriteId = CreateMonIcon(PKMN_UNOWN, SpriteCallbackDummy, x, y, 0, form, TRUE);
+    spriteId = CreateMonIcon(PKMN_UNOWN, SpriteCallbackDummy, x, y, 0, UnownFormToPID(form), TRUE);
     gSprites[spriteId].oam.priority = 0;
 }
 
 static void PrintUnown(u8 PageNumber, u8 row, u8 col) {
-    u16 form = row + (PageNumber-1) * UNOWN_PER_PAGE;
+    u8 form = row + (PageNumber-1) * UNOWN_PER_PAGE;
     DisplayUnownIcon(form, 48 + col*88, 40 + (row - col)*8);
     PrintUnownReportText((u8 *)UnownStrings[form], 48 + col*88, 40 + (row - col)*8);
 }
@@ -194,8 +185,7 @@ static void SwapPage(u8 taskId, u8 SwapDirection) {
     }
 }
 
-static void Task_UnownReportWaitForKeyPress(u8 taskId)
-{
+static void Task_UnownReportWaitForKeyPress(u8 taskId) {
     if (gMain.newAndRepeatedKeys & (DPAD_RIGHT | DPAD_DOWN) || gMain.newKeys & A_BUTTON) SwapPage(taskId, PAGE_NEXT);
     if (gMain.newAndRepeatedKeys & (DPAD_LEFT | DPAD_UP)) SwapPage(taskId, PAGE_PREV);
     if (gMain.newKeys & (B_BUTTON)) {
@@ -204,8 +194,7 @@ static void Task_UnownReportWaitForKeyPress(u8 taskId)
     }
 }
 
-static void Task_UnownReportFadeOut(u8 taskId)
-{
+static void Task_UnownReportFadeOut(u8 taskId) {
     if (!gPaletteFade.active)
     {
         Free(sTilemapBuffer);
@@ -215,38 +204,14 @@ static void Task_UnownReportFadeOut(u8 taskId)
     }
 }
 
-static void DisplayUnownReportText(void)
-{
+static void DisplayUnownReportText(void) {
     SetGpuReg(REG_OFFSET_BG1HOFS, DISPCNT_MODE_0);
     PrintFirstPage();
     PutWindowTilemap(0);
     CopyWindowToVram(0, 3);
 }
 
-static const struct BgTemplate sUnownReportBgTemplates[2] =
-{
-    {
-        .bg = 0,
-        .charBaseIndex = 1,
-        .mapBaseIndex = 31,
-        .screenSize = 0,
-        .paletteMode = 0,
-        .priority = 0,
-        .baseTile = 0,
-    },
-    {
-        .bg = 1,
-        .charBaseIndex = 0,
-        .mapBaseIndex = 6,
-        .screenSize = 1,
-        .paletteMode = 0,
-        .priority = 1,
-        .baseTile = 0,
-    },
-};
-
-static void InitUnownReportBg(void)
-{
+static void InitUnownReportBg(void) {
     ResetBgsAndClearDma3BusyFlags(0);
     InitBgsFromTemplates(0, sUnownReportBgTemplates, 2);
     SetBgTilemapBuffer(1, sTilemapBuffer);
@@ -258,22 +223,7 @@ static void InitUnownReportBg(void)
     SetGpuReg(REG_OFFSET_BLDY, DISPCNT_MODE_0);
 }
 
-static const struct WindowTemplate sUnownReportWinTemplates[2] =
-{
-    {
-        .bg = 0,
-        .tilemapLeft = 2,
-        .tilemapTop = 1,
-        .width = 26,
-        .height = 18,
-        .paletteNum = 15,
-        .baseBlock = 1,
-    },
-    DUMMY_WIN_TEMPLATE,
-};
-
-static void InitUnownReportWindow(void)
-{
+static void InitUnownReportWindow(void) {
     InitWindows(sUnownReportWinTemplates);
     DeactivateAllTextPrinters();
     LoadPalette(unownPal, 0xC0, 0x20);
@@ -281,15 +231,13 @@ static void InitUnownReportWindow(void)
     PutWindowTilemap(0);
 }
 
-static void PrintUnownReportText(u8 *text, u8 var1, u8 var2)
-{
+static void PrintUnownReportText(u8 *text, u8 var1, u8 var2) {
     u8 color[3] = {0, 2, 3};
 
     AddTextPrinterParameterized4(0, 1, var1, var2, 0, 0, color, -1, text);
 }
 
-void Special_ShowUnownReport(void)
-{
+void Special_ShowUnownReport(void) {
     SetMainCallback2(CB2_ShowUnownReport);
     ScriptContext2_Enable();
 }
