@@ -21,6 +21,7 @@
 #include "string_util.h"
 #include "international_string_util.h"
 #include "strings.h"
+#include "event_data.h"
 #include "decompress.h"
 #include "pokemon_icon.h"
 #include "constants/songs.h"
@@ -35,13 +36,12 @@ static s8 GetPageNumber(u8 taskId, u8 SwapDirection);
 static void SwapPage(u8 taskId, u8 SwapDirection);
 void CB2_UnownReport();
 void UnownReport();
-void sub_80CD240(void);
+static void PrintInstructionsBar(void);
 void dp13_810BB8C();
 static void MainCB2(void);
 static void Task_UnownReportFadeIn(u8);
 static void Task_UnownReportWaitForKeyPress(u8);
 static void Task_UnownReportFadeOut(u8);
-static void DisplayUnownReportText(void);
 static void DisplayUnownIcon(u8 form, u16 x, u16 y);
 static void InitUnownReportBg(void);
 static void InitUnownReportWindow(void);
@@ -56,42 +56,58 @@ static void PrintUnownReportText(u8 *, u8, u8);
 
 u8 *sTilemapBuffer;
 
-static const u8 sTextColors[2][3] = { {0, 2, 3}, {15, 14, 13} };
-
-static const struct BgTemplate sUnownReportBgTemplates[2] =
+static const struct BgTemplate sUnownReportBgTemplates[3] =
 {
-    {
-        .bg = 0,
-        .charBaseIndex = 1,
+    { // Unown background
+        .bg = 2,
+        .charBaseIndex = 0,
         .mapBaseIndex = 31,
         .screenSize = 0,
         .paletteMode = 0,
-        .priority = 0,
+        .priority = 2,
         .baseTile = 0,
     },
-    {
+    { // Text
         .bg = 1,
-        .charBaseIndex = 0,
+        .charBaseIndex = 2,
         .mapBaseIndex = 6,
-        .screenSize = 1,
+        .screenSize = 0,
         .paletteMode = 0,
         .priority = 1,
         .baseTile = 0,
     },
+    { // Instructions
+        .bg = 0,
+        .charBaseIndex = 1,
+        .mapBaseIndex = 24,
+        .screenSize = 0,
+        .paletteMode = 0,
+        .priority = 0,
+        .baseTile = 0,
+    }
 };
 
-static const struct WindowTemplate sUnownReportWinTemplates[2] =
+static const struct WindowTemplate sUnownReportWinTemplates[3] =
 {
-    {
-        .bg = 0,
+    { // Text
+        .bg = 1,
         .tilemapLeft = 2,
-        .tilemapTop = 1,
+        .tilemapTop = 0,
         .width = 26,
         .height = 18,
         .paletteNum = 15,
-        .baseBlock = 1,
+        .baseBlock = 1
     },
-    DUMMY_WIN_TEMPLATE,
+    {
+        .bg = 0,
+        .tilemapLeft = 0,
+        .tilemapTop = 0,
+        .width = 30,
+        .height = 2,
+        .paletteNum = 15,
+        .baseBlock = 1
+    },
+    DUMMY_WIN_TEMPLATE
 };
 
 static const u8 *UnownStrings[] = {

@@ -85,3 +85,4 @@ LZDecompressWram = 0x0800EBB4|1;
 BlendPalettes = 0x080714D4|1;
 EnableInterrupts = 0x08000B68|1;
 ScriptContext2_Enable = 0x08069940|1;
+FlagGet = 0x0806E6D0|1;

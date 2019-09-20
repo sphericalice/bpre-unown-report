@@ -36,3 +36,4 @@ extern const u8 gText_Report3[];
 extern const u8 gText_Report4[];
 extern const u8 gText_Report5[];
 extern const u8 gText_Report6[];
+extern const u8 gText_Instructions[];

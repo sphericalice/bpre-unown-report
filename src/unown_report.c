@@ -6,6 +6,36 @@ static void VBlankCB(void) {
     TransferPlttBuffer();
 }
 
+static void InitUnownReportBg(void) {
+    ResetBgsAndClearDma3BusyFlags(0);
+    InitBgsFromTemplates(0, sUnownReportBgTemplates, 3);
+    SetBgTilemapBuffer(2, sTilemapBuffer);
+    SetGpuReg(REG_OFFSET_DISPCNT, DISPCNT_OBJ_ON | DISPCNT_OBJ_1D_MAP);
+    ShowBg(0);
+    ShowBg(1);
+    ShowBg(2);
+    SetGpuReg(REG_OFFSET_BLDCNT, DISPCNT_MODE_0);
+    SetGpuReg(REG_OFFSET_BLDALPHA, DISPCNT_MODE_0);
+    SetGpuReg(REG_OFFSET_BLDY, DISPCNT_MODE_0);
+}
+
+static void PrintInstructionsBar(void) {
+    u8 color[3] = {0, 2, 3};
+
+    FillWindowPixelBuffer(1, PIXEL_FILL(0));
+    AddTextPrinterParameterized3(1, 0, 2, 1, color, 0, (u8 *)gText_Instructions);
+    PutWindowTilemap(1);
+    CopyWindowToVram(1, 3);
+}
+
+static void InitUnownReportWindow(void) {
+    InitWindows(sUnownReportWinTemplates);
+    DeactivateAllTextPrinters();
+    LoadPalette(unownPal, 0xC0, 0x20);
+    FillWindowPixelBuffer(0, PIXEL_FILL(0));
+    PutWindowTilemap(0);
+}
+
 void CB2_ShowUnownReport(void) {
     SetVBlankCallback(NULL);
     SetGpuReg(REG_OFFSET_DISPCNT, DISPCNT_MODE_0);
@@ -34,11 +64,12 @@ void CB2_ShowUnownReport(void) {
     InitUnownReportBg();
     InitUnownReportWindow();
     reset_temp_tile_data_buffers();
-    decompress_and_copy_tile_data_to_vram(1, &unownTiles, 0, 0, 0);
+    decompress_and_copy_tile_data_to_vram(2, &unownTiles, 0, 0, 0);
     while (free_temp_tile_data_buffers_if_possible());
     LZDecompressWram(unownMap, sTilemapBuffer);
-    CopyBgTilemapBufferToVram(1);
-    DisplayUnownReportText();
+    CopyBgTilemapBufferToVram(2);
+    PrintInstructionsBar();
+    PrintFirstPage();
     BlendPalettes(-1, 16, 0);
     BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB_BLACK);
     EnableInterrupts(1);
@@ -115,12 +146,14 @@ static void PrintFirstPage() {
     u16 width = 0;
     StringExpandPlaceholders(gStringVar4, gText_PlayersUnownReport);
     width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
-    PrintUnownReportText(gStringVar4, 104 - (width >> 1), 40);
+    PrintUnownReportText(gStringVar4, 104 - (width >> 1), 48);
 
     ConvertIntToDecimalStringN(gStringVar1, UnownCount(), STR_CONV_MODE_LEFT_ALIGN, 4);
     StringExpandPlaceholders(gStringVar4, gText_CurrentKinds);
     width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
-    PrintUnownReportText(gStringVar4, 104 - (width >> 1), 64);
+    PrintUnownReportText(gStringVar4, 104 - (width >> 1), 72);
+    PutWindowTilemap(0);
+    CopyWindowToVram(0, 3);
 }
 
 static u32 UnownFormToPID(u8 form) {
@@ -140,7 +173,7 @@ static void DisplayUnownIcon(u8 form, u16 x, u16 y) {
 static void PrintUnown(u8 PageNumber, u8 row, u8 col) {
     u8 form = row + (PageNumber-1) * UNOWN_PER_PAGE;
     DisplayUnownIcon(form, 48 + col*88, 50 + (row - col)*12);
-    PrintUnownReportText((u8 *)UnownStrings[form], 48 + col*88, 40 + (row - col)*12);
+    PrintUnownReportText((u8 *)UnownStrings[form], 48 + col*88, 48 + (row - col)*12);
 }
 
 static void PrintUnownList(u8 PageNumber) {
@@ -151,18 +184,21 @@ static void PrintUnownList(u8 PageNumber) {
     for (row = 0, col = 0; row < max-(PageNumber-1) * UNOWN_PER_PAGE; row++, col ^= 1) {
         PrintUnown(PageNumber, row, col);
     }
-    return;
+    PutWindowTilemap(0);
+    CopyWindowToVram(0, 3);
 }
 
 static void PrintReportPage(u8 PageNumber) {
-    PrintUnownReportText((u8 *)ReportStrings[PageNumber], 16, 40);
-    return;
+    PrintUnownReportText((u8 *)ReportStrings[PageNumber], 16, 48);
+    PutWindowTilemap(0);
+    CopyWindowToVram(0, 3);
 }
 
 static void SwapPage(u8 taskId, u8 SwapDirection) {
     s8 PageNumber = GetPageNumber(taskId, SwapDirection);
     if (PageNumber != -1) {
         ResetSpriteData();
+        PlaySE(SE_SELECT);
         switch (PageNumber) {
             default:
             case 0:
@@ -183,9 +219,6 @@ static void SwapPage(u8 taskId, u8 SwapDirection) {
                 PrintReportPage(PageNumber - 5);
                 break;
         }
-        PlaySE(SE_SELECT);
-        PutWindowTilemap(0);
-        CopyWindowToVram(0, 3);
     }
 }
 
@@ -199,40 +232,12 @@ static void Task_UnownReportWaitForKeyPress(u8 taskId) {
 }
 
 static void Task_UnownReportFadeOut(u8 taskId) {
-    if (!gPaletteFade.active)
-    {
+    if (!gPaletteFade.active) {
         Free(sTilemapBuffer);
         FreeAllWindowBuffers();
         DestroyTask(taskId);
         SetMainCallback2(CB2_ReturnToFieldContinueScriptPlayMapMusic);
     }
-}
-
-static void DisplayUnownReportText(void) {
-    SetGpuReg(REG_OFFSET_BG1HOFS, DISPCNT_MODE_0);
-    PrintFirstPage();
-    PutWindowTilemap(0);
-    CopyWindowToVram(0, 3);
-}
-
-static void InitUnownReportBg(void) {
-    ResetBgsAndClearDma3BusyFlags(0);
-    InitBgsFromTemplates(0, sUnownReportBgTemplates, 2);
-    SetBgTilemapBuffer(1, sTilemapBuffer);
-    SetGpuReg(REG_OFFSET_DISPCNT, DISPCNT_OBJ_ON | DISPCNT_OBJ_1D_MAP);
-    ShowBg(0);
-    ShowBg(1);
-    SetGpuReg(REG_OFFSET_BLDCNT, DISPCNT_MODE_0);
-    SetGpuReg(REG_OFFSET_BLDALPHA, DISPCNT_MODE_0);
-    SetGpuReg(REG_OFFSET_BLDY, DISPCNT_MODE_0);
-}
-
-static void InitUnownReportWindow(void) {
-    InitWindows(sUnownReportWinTemplates);
-    DeactivateAllTextPrinters();
-    LoadPalette(unownPal, 0xC0, 0x20);
-    FillWindowPixelBuffer(0, PIXEL_FILL(0));
-    PutWindowTilemap(0);
 }
 
 static void PrintUnownReportText(u8 *text, u8 var1, u8 var2) {
