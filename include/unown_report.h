@@ -31,7 +31,7 @@ u8 UnownCount();
 static u8 GetPage(u8 PageNumber, u8 SwapDirection);
 static void PrintUnownList(u8,u8 PageNumber);
 static void PrintReportPage(u8 PageNumber);
-static void PrintFirstPage(u8);
+static void PrintFirstPage();
 static s8 GetPageNumber(u8 taskId, u8 SwapDirection);
 static void SwapPage(u8 taskId, u8 SwapDirection);
 void CB2_UnownReport();

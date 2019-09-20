@@ -69,7 +69,7 @@ void CB2_ShowUnownReport(void) {
     LZDecompressWram(unownMap, sTilemapBuffer);
     CopyBgTilemapBufferToVram(2);
     PrintInstructionsBar();
-    PrintFirstPage(0);
+    PrintFirstPage();
     BlendPalettes(-1, 16, 0);
     BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB_BLACK);
     EnableInterrupts(1);
@@ -90,44 +90,46 @@ static void Task_UnownReportFadeIn(u8 taskId) {
         gTasks[taskId].func = Task_UnownReportWaitForKeyPress;
 }
 
-void PrepareUnownData(u8 taskId) {
-    u32 CaughtUnowns;
-//  CaughtUnowns = VarGet(VAR_UNOWNCAUGHT_PT1) << 16 | VarGet(VAR_UNOWNCAUGHT_PT2);
-    CaughtUnowns = 0b00000101010101010101010101010101;
-    struct Task *task = &gTasks[taskId];
-    task->data[1] = CaughtUnowns & 0x000000FF;
-    task->data[2] = (CaughtUnowns & 0x0000FF00) >> 8;
-    task->data[3] = (CaughtUnowns & 0x00FF0000) >> 16;
-    task->data[4] = (CaughtUnowns & 0xFF000000) >> 24;
+u32 GetCaughtUnown() {
+    u32 CaughtUnown;
+//  CaughtUnown = VarGet(VAR_UNOWNCAUGHT_PT1) << 16 | VarGet(VAR_UNOWNCAUGHT_PT2);
+    CaughtUnown = 0b00001111111111111111111111111111;
+    return CaughtUnown;
+}
+
+u8 UnownCount() {
+    u32 CaughtUnown = GetCaughtUnown();
+
     u8 UniqueForms = 0;
     for (u8 i = 0; i < 28; i++)
-        if (CaughtUnowns & (1 << i)) UniqueForms++;
-    task->data[5] = UniqueForms;
-    if (UniqueForms == 0) task->data[5] = -1;
+        if (CaughtUnown & (1 << i)) UniqueForms++;
+    return UniqueForms;   
 }
+
+void PrepareUnownData(u8 taskId);
 
 static u8 GetPage(u8 taskId, u8 SwapDirection) {
     u8 PageNumber;
     struct Task *task = &gTasks[taskId];
     PageNumber = task->data[0];
-    u8 UnownCount;
-    UnownCount = task->data[5];
+    u8 count;
+    count = UnownCount();
     if (SwapDirection == PAGE_NEXT) {
         if (PageNumber == MAX_PAGE_COUNT) return PageNumber;
         if (PageNumber == 0) {
-            if (UnownCount == 0) return 5;
-            if (UnownCount > 1) return 1;
+            if (count == 0) return 5;
+            if (count > 1) return 1;
         }
         if (PageNumber == 1) {
-            if (UnownCount <= UNOWN_PER_PAGE) return 5;
-            if (UnownCount > UNOWN_PER_PAGE) return 2;
+            if (count <= UNOWN_PER_PAGE) return 5;
+            if (count > UNOWN_PER_PAGE) return 2;
         }
         if (PageNumber == 2) {
-            if (UnownCount <= 2 * UNOWN_PER_PAGE) return 5;
-            if (UnownCount > 2 * UNOWN_PER_PAGE) return 3;
+            if (count <= 2 * UNOWN_PER_PAGE) return 5;
+            if (count > 2 * UNOWN_PER_PAGE) return 3;
         }
         if (PageNumber == 3) {
-            if (UnownCount > 26) return 4;
+            if (count > 26) return 4;
             else return 5;
         }
         if (PageNumber >= 5 && FlagGet(ReportFlags[PageNumber-5]) == FALSE) return PageNumber;
@@ -136,11 +138,11 @@ static u8 GetPage(u8 taskId, u8 SwapDirection) {
     if (SwapDirection == PAGE_PREV) {
         if (PageNumber == 0) return PageNumber;
         if (PageNumber == 5) {
-            if (UnownCount == 0) return 0;
-            if (UnownCount <= UNOWN_PER_PAGE) return 1;
-            if (UnownCount <= 2 * UNOWN_PER_PAGE) return 2;
-            if (UnownCount <= 26) return 3;
-            if (UnownCount > 26) return 4;
+            if (count == 0) return 0;
+            if (count <= UNOWN_PER_PAGE) return 1;
+            if (count <= 2 * UNOWN_PER_PAGE) return 2;
+            if (count <= 26) return 3;
+            if (count > 26) return 4;
         }
         return PageNumber - 1;
     }
@@ -159,15 +161,14 @@ static s8 GetPageNumber(u8 taskId, u8 SwapDirection) {
     return -1;
 }
 
-static void PrintFirstPage(u8 taskId) {
-    struct Task *task = &gTasks[taskId];
-    u8 UnownCount = task->data[5];
+static void PrintFirstPage() {
+    u8 count = UnownCount();
     u16 width = 0;
     StringExpandPlaceholders(gStringVar4, gText_PlayersUnownReport);
     width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
     PrintUnownReportText(gStringVar4, 104 - (width >> 1), 48);
 
-    ConvertIntToDecimalStringN(gStringVar1, UnownCount, STR_CONV_MODE_LEFT_ALIGN, 4);
+    ConvertIntToDecimalStringN(gStringVar1, count, STR_CONV_MODE_LEFT_ALIGN, 4);
     StringExpandPlaceholders(gStringVar4, gText_CurrentKinds);
     width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
     PrintUnownReportText(gStringVar4, 104 - (width >> 1), 72);
@@ -197,18 +198,17 @@ static void PrintUnown(u8 form, u8 row, u8 col) {
 static void PrintUnownList(u8 taskId, u8 PageNumber) {
     struct Task *task = &gTasks[taskId];
     
-    u32 CaughtUnowns = (task->data[4] << 24) | (task->data[3] << 16) | (task->data[2] << 8) | task->data[1];
-
+    u32 CaughtUnown = GetCaughtUnown();
     u8 currBit = 0;
-    if (PageNumber > 0) currBit = task->data[5 + PageNumber];
+    if (PageNumber > 0) currBit = task->data[1 + PageNumber];
     for (u8 row = 0, col = 0; row < UNOWN_PER_PAGE && currBit <= 28; currBit++) {
-        if (CaughtUnowns & (1 << currBit)) {
+        if (CaughtUnown & (1 << currBit)) {
             PrintUnown(currBit, row, col);
             row++;
             col ^= 1;
         }   
     }
-    if (PageNumber < 3) task->data[6 + PageNumber] = currBit;
+    if (PageNumber < 3) task->data[2 + PageNumber] = currBit;
     
     PutWindowTilemap(0);
     CopyWindowToVram(0, 3);
@@ -228,7 +228,7 @@ static void SwapPage(u8 taskId, u8 SwapDirection) {
         switch (PageNumber) {
             default:
             case 0:
-                PrintFirstPage(taskId);
+                PrintFirstPage();
                 break;
             case 1:
             case 2:
@@ -249,7 +249,6 @@ static void SwapPage(u8 taskId, u8 SwapDirection) {
 }
 
 static void Task_UnownReportWaitForKeyPress(u8 taskId) {
-    if (gTasks[taskId].data[5] == 0) PrepareUnownData(taskId);
     if (gMain.newAndRepeatedKeys & (DPAD_RIGHT | DPAD_DOWN) || gMain.newKeys & A_BUTTON) SwapPage(taskId, PAGE_NEXT);
     if (gMain.newAndRepeatedKeys & (DPAD_LEFT | DPAD_UP)) SwapPage(taskId, PAGE_PREV);
     if (gMain.newKeys & (B_BUTTON)) {
