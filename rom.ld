@@ -75,3 +75,4 @@ FillWindowPixelRect8Bit = 0x08005180|1;
 sub_809FAE4 = 0x0809FAE4|1;
 AddWindow = 0x08003CE4|1;
 rbox_fill_rectangle = 0x0815036C|1;
+CreateSprite = 0x08006F8C|1;

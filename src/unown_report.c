@@ -67,19 +67,27 @@ static void PrintFirstPage() {
     return;
 }
 
+static void PrintUnown(u8 PageNumber, u8 row, u8 col) {
+    u8 spriteId;
+    LoadMonIconPalettes();
+    spriteId = CreateMonIcon(PKMN_UNOWN, SpriteCallbackDummy, 48, 40, 0, 0, TRUE);
+    gSprites[spriteId].oam.priority = 3;
+    AddTextPrinterParameterized3(0,
+                                 2,
+                                 48 + col*88,
+                                 40 + (row - col)*8,
+                                 sTextColors[0],
+                                 TEXT_SPEED_FF,
+                                 UnownStrings[row + (PageNumber-1) * UNOWN_PER_PAGE]);
+}
+
 static void PrintUnownList(u8 PageNumber) {
     u8 row, col, max;
     max = UnownCount();
     if (max > (PageNumber * UNOWN_PER_PAGE)) max = PageNumber * UNOWN_PER_PAGE;
     if (max > 28) max = 28;
     for (row = 0, col = 0; row < max-(PageNumber-1) * UNOWN_PER_PAGE; row++, col ^= 1) {
-        AddTextPrinterParameterized3(0,
-                                     2,
-                                     48 + col*88,
-                                     40 + (row - col)*8,
-                                     sTextColors[0],
-                                     TEXT_SPEED_FF,
-                                     UnownStrings[row + (PageNumber-1) * UNOWN_PER_PAGE]);
+        PrintUnown(PageNumber, row, col);
     }
     return;
 }

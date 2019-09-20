@@ -54,6 +54,7 @@ void dp13_810BB8C();
 #define PAGE_NEXT 0
 #define PAGE_PREV 1
 #define currentPage data[0]
+#define PKMN_UNOWN 201
 
 u8 *sTilemapBuffer;
 
