@@ -1,6 +1,6 @@
 ## Unown Report
 
-The Johto-based games introduced a feature where you can view a log of the Unown forms you have captured. This ports that feature to FR ROMs.
+The Johto-based games introduced an item called the Unown Report, which logs the Unown forms you have captured, and adds some details about the research into the Ruins of Alph as you progress through the quest. This ports that feature to FR ROMs, specifically for the ROM hack [Pokémon Gaia Version](http://www.pokecommunity.com/showthread.php?t=326118).
 
 ### Build Instructions
 
@@ -26,7 +26,8 @@ The makefile does not build or rebuild the graphics used by this project, so you
 
 ```shell
 $ cd include/graphics
-$ grit unown.png -gt -gB4 -mLf -mRtpf -pn 16 -ftc -fh!```
+$ grit unown.png -gt -gB4 -mLf -mRtpf -pn 16 -ftc -fh!
+```
 
 You should add grit to your PATH.
 
