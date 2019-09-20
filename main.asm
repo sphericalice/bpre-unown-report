@@ -12,6 +12,6 @@
 .endarea
 
 .org gSpecials + SPECIAL_UnownReport * SIZEOF_PTR
-.word UnownReport |1
+.word Special_ShowUnownReport |1
 
 .close

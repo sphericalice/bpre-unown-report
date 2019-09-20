@@ -17,14 +17,16 @@
 #include "overworld.h"
 #include "sound.h"
 #include "menu.h"
+#include "script.h"
 #include "string_util.h"
 #include "international_string_util.h"
 #include "strings.h"
+#include "decompress.h"
 #include "pokemon_icon.h"
 #include "constants/songs.h"
 #include "graphics/unown.c"
 
-static void SetDispcntReg(void);
+/* static void SetDispcntReg(void);
 static void ClearVramOamPlttRegs(void);
 static void ClearTasksAndGraphicalStructs(void);
 static void ResetBgCoordinates(void);
@@ -48,7 +50,7 @@ void CB2_UnownReport();
 void UnownReport();
 void sub_80CD240(void);
 void dp13_810BB8C();
-
+ */
 #define MAX_PAGE_COUNT 9
 #define UNOWN_PER_PAGE 10
 #define PAGE_NEXT 0
@@ -57,7 +59,7 @@ void dp13_810BB8C();
 #define PKMN_UNOWN 201
 
 u8 *sTilemapBuffer;
-
+/* 
 static const u8 sTextColors[2][3] = { {0, 2, 3}, {15, 14, 13} };
 static const struct BgTemplate sUnownReportBgTemplates[] = { { 0, 0, 31, 0, 0, 0, 0 }, { 3, 1, 30, 0, 0, 3, 0 } };
 static const struct WindowTemplate sUnownReportWindowTemplates[] = { { 0, 2, 1, 26, 18, 15, 20 }, DUMMY_WIN_TEMPLATE };
@@ -72,3 +74,4 @@ static const u8 *UnownStrings[] = {
 static const u8 *ReportStrings[] = {
     gText_Report1, gText_Report2, gText_Report3, gText_Report4, gText_Report5, gText_Report6
 };
+ */
