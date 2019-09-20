@@ -47,8 +47,8 @@ static void InitUnownReportBg(void);
 static void InitUnownReportWindow(void);
 static void PrintUnownReportText(u8 *, u8, u8);
 
-#define MAX_PAGE_COUNT 9
-#define UNOWN_PER_PAGE 10
+#define MAX_PAGE_COUNT 10
+#define UNOWN_PER_PAGE 8
 #define PAGE_NEXT 0
 #define PAGE_PREV 1
 #define currentPage data[0]

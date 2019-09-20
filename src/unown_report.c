@@ -35,8 +35,7 @@ void CB2_ShowUnownReport(void) {
     InitUnownReportWindow();
     reset_temp_tile_data_buffers();
     decompress_and_copy_tile_data_to_vram(1, &unownTiles, 0, 0, 0);
-    while (free_temp_tile_data_buffers_if_possible())
-        ;
+    while (free_temp_tile_data_buffers_if_possible());
     LZDecompressWram(unownMap, sTilemapBuffer);
     CopyBgTilemapBufferToVram(1);
     DisplayUnownReportText();
@@ -60,7 +59,6 @@ static void Task_UnownReportFadeIn(u8 taskId) {
         gTasks[taskId].func = Task_UnownReportWaitForKeyPress;
 }
 
-
 u8 UnownCount() {
     // TODO: Actually count the kinds of Unown the player has caught
     return 28;
@@ -70,26 +68,31 @@ static u8 GetPage(u8 PageNumber, u8 SwapDirection) {
     if (SwapDirection == PAGE_NEXT) {
         if (PageNumber == MAX_PAGE_COUNT) return PageNumber;
         if (PageNumber == 0) {
-            if (UnownCount() == 0) return 4;
+            if (UnownCount() == 0) return 5;
             if (UnownCount() > 1) return 1;
         }
         if (PageNumber == 1) {
-            if (UnownCount() <= 10) return 4;
-            if (UnownCount() > 10) return 2;
+            if (UnownCount() <= UNOWN_PER_PAGE) return 5;
+            if (UnownCount() > UNOWN_PER_PAGE) return 2;
         }
         if (PageNumber == 2) {
-            if (UnownCount() <= 20) return 4;
-            if (UnownCount() > 20) return 3;
+            if (UnownCount() <= 2 * UNOWN_PER_PAGE) return 5;
+            if (UnownCount() > 2 * UNOWN_PER_PAGE) return 3;
+        }
+        if (PageNumber == 3) {
+            if (UnownCount() > 26) return 4;
+            else return 5;
         }
         return PageNumber + 1;
     }
     if (SwapDirection == PAGE_PREV) {
         if (PageNumber == 0) return PageNumber;
-        if (PageNumber == 4) {
+        if (PageNumber == 5) {
             if (UnownCount() == 0) return 0;
-            if (UnownCount() <= 10) return 1;
-            if (UnownCount() <= 20) return 2;
-            if (UnownCount() > 20) return 3;
+            if (UnownCount() <= UNOWN_PER_PAGE) return 1;
+            if (UnownCount() <= 2 * UNOWN_PER_PAGE) return 2;
+            if (UnownCount() <= 26) return 3;
+            if (UnownCount() > 26) return 4;
         }        
         return PageNumber - 1;
     }
@@ -112,12 +115,12 @@ static void PrintFirstPage() {
     u16 width = 0;
     StringExpandPlaceholders(gStringVar4, gText_PlayersUnownReport);
     width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
-    PrintUnownReportText(gStringVar4, 0x68 - (width >> 1), 40);
+    PrintUnownReportText(gStringVar4, 104 - (width >> 1), 40);
 
     ConvertIntToDecimalStringN(gStringVar1, UnownCount(), STR_CONV_MODE_LEFT_ALIGN, 4);
     StringExpandPlaceholders(gStringVar4, gText_CurrentKinds);
     width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
-    PrintUnownReportText(gStringVar4, 0x68 - (width >> 1), 64);
+    PrintUnownReportText(gStringVar4, 104 - (width >> 1), 64);
 }
 
 static u32 UnownFormToPID(u8 form) {
@@ -136,8 +139,8 @@ static void DisplayUnownIcon(u8 form, u16 x, u16 y) {
 
 static void PrintUnown(u8 PageNumber, u8 row, u8 col) {
     u8 form = row + (PageNumber-1) * UNOWN_PER_PAGE;
-    DisplayUnownIcon(form, 48 + col*88, 40 + (row - col)*8);
-    PrintUnownReportText((u8 *)UnownStrings[form], 48 + col*88, 40 + (row - col)*8);
+    DisplayUnownIcon(form, 48 + col*88, 50 + (row - col)*12);
+    PrintUnownReportText((u8 *)UnownStrings[form], 48 + col*88, 40 + (row - col)*12);
 }
 
 static void PrintUnownList(u8 PageNumber) {
@@ -168,15 +171,16 @@ static void SwapPage(u8 taskId, u8 SwapDirection) {
             case 1:
             case 2:
             case 3:
+            case 4:
                 PrintUnownList(PageNumber);
                 break;
-            case 4:
             case 5:
             case 6:
             case 7:
             case 8:
             case 9:
-                PrintReportPage(PageNumber-4);
+            case 10:
+                PrintReportPage(PageNumber - 5);
                 break;
         }
         PlaySE(SE_SELECT);
