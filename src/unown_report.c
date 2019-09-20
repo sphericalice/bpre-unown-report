@@ -5,6 +5,7 @@ static void Task_UnownReportFadeIn(u8);
 static void Task_UnownReportWaitForKeyPress(u8);
 static void Task_UnownReportFadeOut(u8);
 static void DisplayUnownReportText(void);
+static void DisplayUnownIcon(u8 form, u16 x, u16 y);
 static void InitUnownReportBg(void);
 static void InitUnownReportWindow(void);
 static void PrintUnownReportText(u8 *, u8, u8);
@@ -74,10 +75,130 @@ static void Task_UnownReportFadeIn(u8 taskId)
         gTasks[taskId].func = Task_UnownReportWaitForKeyPress;
 }
 
+
+u8 UnownCount() {
+    // TODO: Actually count the kinds of Unown the player has caught
+    return 28;
+}
+
+static u8 GetPage(u8 PageNumber, u8 SwapDirection) {
+    if (SwapDirection == PAGE_NEXT) {
+        if (PageNumber == MAX_PAGE_COUNT) return PageNumber;
+        if (PageNumber == 0) {
+            if (UnownCount() == 0) return 4;
+            if (UnownCount() > 1) return 1;
+        }
+        if (PageNumber == 1) {
+            if (UnownCount() <= 10) return 4;
+            if (UnownCount() > 10) return 2;
+        }
+        if (PageNumber == 2) {
+            if (UnownCount() <= 20) return 4;
+            if (UnownCount() > 20) return 3;
+        }
+        return PageNumber + 1;
+    }
+    if (SwapDirection == PAGE_PREV) {
+        if (PageNumber == 0) return PageNumber;
+        if (PageNumber == 4) {
+            if (UnownCount() == 0) return 0;
+            if (UnownCount() <= 10) return 1;
+            if (UnownCount() <= 20) return 2;
+            if (UnownCount() > 20) return 3;
+        }        
+        return PageNumber - 1;
+    }
+    return PageNumber;
+}
+
+static s8 GetPageNumber(u8 taskId, u8 SwapDirection) {
+    struct Task *task = &gTasks[taskId];
+    if (GetPage(task->currentPage, SwapDirection) != task->currentPage) {
+        task->currentPage = GetPage(task->currentPage, SwapDirection);            
+        FillWindowPixelBuffer(0, 0);
+        ClearWindowTilemap(0);
+        CopyWindowToVram(0, 3);
+        return task->currentPage;
+    }
+    return -1;
+}
+
+static void PrintFirstPage() {
+    u16 width = 0;
+    StringExpandPlaceholders(gStringVar4, gText_PlayersUnownReport);
+    width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
+    PrintUnownReportText(gStringVar4, 0x68 - (width >> 1), 40);
+
+    ConvertIntToDecimalStringN(gStringVar1, UnownCount(), STR_CONV_MODE_LEFT_ALIGN, 4);
+    StringExpandPlaceholders(gStringVar4, gText_CurrentKinds);
+    width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
+    PrintUnownReportText(gStringVar4, 0x68 - (width >> 1), 64);
+}
+
+static void DisplayUnownIcon(u8 form, u16 x, u16 y)
+{
+    u8 spriteId;
+    LoadMonIconPalettes();
+    spriteId = CreateMonIcon(PKMN_UNOWN, SpriteCallbackDummy, x, y, 0, form, TRUE);
+    gSprites[spriteId].oam.priority = 0;
+}
+
+static void PrintUnown(u8 PageNumber, u8 row, u8 col) {
+    u16 form = row + (PageNumber-1) * UNOWN_PER_PAGE;
+    DisplayUnownIcon(form, 48 + col*88, 40 + (row - col)*8);
+    PrintUnownReportText((u8 *)UnownStrings[form], 48 + col*88, 40 + (row - col)*8);
+}
+
+static void PrintUnownList(u8 PageNumber) {
+    u8 row, col, max;
+    max = UnownCount();
+    if (max > (PageNumber * UNOWN_PER_PAGE)) max = PageNumber * UNOWN_PER_PAGE;
+    if (max > 28) max = 28;
+    for (row = 0, col = 0; row < max-(PageNumber-1) * UNOWN_PER_PAGE; row++, col ^= 1) {
+        PrintUnown(PageNumber, row, col);
+    }
+    return;
+}
+
+static void PrintReportPage(u8 PageNumber) {
+    PrintUnownReportText((u8 *)ReportStrings[PageNumber], 16, 40);
+    return;
+}
+
+static void SwapPage(u8 taskId, u8 SwapDirection) {
+    s8 PageNumber = GetPageNumber(taskId, SwapDirection);
+    if (PageNumber != -1) {
+        ResetSpriteData();
+        switch (PageNumber) {
+            default:
+            case 0:
+                PrintFirstPage();
+                break;
+            case 1:
+            case 2:
+            case 3:
+                PrintUnownList(PageNumber);
+                break;
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+            case 8:
+            case 9:
+                PrintReportPage(PageNumber-4);
+                break;
+        }
+        PlaySE(SE_SELECT);
+        PutWindowTilemap(0);
+        CopyWindowToVram(0, 3);
+    }
+}
+
 static void Task_UnownReportWaitForKeyPress(u8 taskId)
 {
-    if (gMain.newKeys & (A_BUTTON | B_BUTTON))
-    {
+    if (gMain.newAndRepeatedKeys & (DPAD_RIGHT | DPAD_DOWN) || gMain.newKeys & A_BUTTON) SwapPage(taskId, PAGE_NEXT);
+    if (gMain.newAndRepeatedKeys & (DPAD_LEFT | DPAD_UP)) SwapPage(taskId, PAGE_PREV);
+    if (gMain.newKeys & (B_BUTTON)) {
         BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, RGB_BLACK);
         gTasks[taskId].func = Task_UnownReportFadeOut;
     }
@@ -97,8 +218,7 @@ static void Task_UnownReportFadeOut(u8 taskId)
 static void DisplayUnownReportText(void)
 {
     SetGpuReg(REG_OFFSET_BG1HOFS, DISPCNT_MODE_0);
-    StringExpandPlaceholders(gStringVar4, gText_PlayersUnownReport);
-    PrintUnownReportText(gStringVar4, 80 - (GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF) >> 1), 36);
+    PrintFirstPage();
     PutWindowTilemap(0);
     CopyWindowToVram(0, 3);
 }
@@ -142,10 +262,10 @@ static const struct WindowTemplate sUnownReportWinTemplates[2] =
 {
     {
         .bg = 0,
-        .tilemapLeft = 5,
-        .tilemapTop = 2,
-        .width = 20,
-        .height = 16,
+        .tilemapLeft = 2,
+        .tilemapTop = 1,
+        .width = 26,
+        .height = 18,
         .paletteNum = 15,
         .baseBlock = 1,
     },
