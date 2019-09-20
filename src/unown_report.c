@@ -90,17 +90,10 @@ static void Task_UnownReportFadeIn(u8 taskId) {
         gTasks[taskId].func = Task_UnownReportWaitForKeyPress;
 }
 
-#define UNOWN_A 0
-#define UNOWN_B 1
-#define UNOWN_Y 24
-#define UNOWN_Z 25
-#define UNOWN_EXCLAIM 26
-#define UNOWN_QUESTION 27
-
 void PrepareUnownData(u8 taskId) {
     u32 CaughtUnowns;
 //  CaughtUnowns = VarGet(VAR_UNOWNCAUGHT_PT1) << 16 | VarGet(VAR_UNOWNCAUGHT_PT2);
-    CaughtUnowns = 0b000011111111111111111111111111111111;
+    CaughtUnowns = 0b00000101010101010101010101010101;
     struct Task *task = &gTasks[taskId];
     task->data[1] = CaughtUnowns & 0x000000FF;
     task->data[2] = (CaughtUnowns & 0x0000FF00) >> 8;
@@ -203,54 +196,20 @@ static void PrintUnown(u8 form, u8 row, u8 col) {
 
 static void PrintUnownList(u8 taskId, u8 PageNumber) {
     struct Task *task = &gTasks[taskId];
-    u8 formsAtoH = task->data[1];
-    u8 formsItoP = task->data[2];
-    u8 formsQtoX = task->data[3];
-    u8 restOfForms = task->data[4];
+    
+    u32 CaughtUnowns = (task->data[4] << 24) | (task->data[3] << 16) | (task->data[2] << 8) | task->data[1];
 
-    u8 row = 0;
-    u8 col = 0;
-    u8 pageTotal = 0;
-    u8 currBit;
-    if (PageNumber == 0) currBit = 0;
-    if (PageNumber == 1) currBit = task->data[6];
-    if (PageNumber == 2) currBit = task->data[7];
-    if (PageNumber == 3) currBit = task->data[8];
-    for (u8 form = 0; pageTotal < UNOWN_PER_PAGE && currBit < 28; currBit++) {
-        form = currBit;
-        if (currBit < 8) {
-            if (formsAtoH & (1 << currBit)) {
-                PrintUnown(form, row, col);
-                row++;
-                col ^= 1;
-                pageTotal++;
-            }
-        } else if (currBit < 16) {
-            if (formsItoP & (1 << (currBit - 8))) {
-                PrintUnown(form, row, col);
-                row++;
-                col ^= 1;
-                pageTotal++;
-            }
-        } else if (currBit < 24) {
-            if (formsQtoX & (1 << (currBit - 16))) {
-                PrintUnown(form, row, col);
-                row++;
-                col ^= 1;
-                pageTotal++;
-            }
-        } else if (currBit < 29) {
-            if (restOfForms & (1 << (currBit - 24))) {
-                PrintUnown(form, row, col);
-                row++;
-                col ^= 1;
-                pageTotal++;
-            }
-        }            
+    u8 currBit = 0;
+    if (PageNumber > 0) currBit = task->data[5 + PageNumber];
+    for (u8 row = 0, col = 0; row < UNOWN_PER_PAGE && currBit <= 28; currBit++) {
+        if (CaughtUnowns & (1 << currBit)) {
+            PrintUnown(currBit, row, col);
+            row++;
+            col ^= 1;
+        }   
     }
-    if (PageNumber == 0) task->data[6] = currBit;
-    if (PageNumber == 1) task->data[7] = currBit;
-    if (PageNumber == 2) task->data[8] = currBit;
+    if (PageNumber < 3) task->data[6 + PageNumber] = currBit;
+    
     PutWindowTilemap(0);
     CopyWindowToVram(0, 3);
 }
