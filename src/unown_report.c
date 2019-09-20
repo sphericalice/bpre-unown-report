@@ -90,9 +90,26 @@ static void Task_UnownReportFadeIn(u8 taskId) {
         gTasks[taskId].func = Task_UnownReportWaitForKeyPress;
 }
 
+#define UNOWN_A 0
+#define UNOWN_B 1
+#define UNOWN_Y 24
+#define UNOWN_Z 25
+#define UNOWN_EXCLAIM 26
+#define UNOWN_QUESTION 27
+
+u32 GetCaughtUnowns() {
+    //u32 CaughtUnowns = VarGet(VAR_UNOWNCAUGHT_PT1) << 16 | VarGet(VAR_UNOWNCAUGHT_PT2);
+    u32 CaughtUnowns = 0b00001000000000111111111111111111;
+    return CaughtUnowns;
+}
+
 u8 UnownCount() {
-    // TODO: Actually count the kinds of Unown the player has caught
-    return 28;
+    u8 UniqueForms = 0;
+    u32 CaughtUnowns = GetCaughtUnowns();
+    for (u8 i = 1; i < 28; i++)
+        if (CaughtUnowns & (1 << i)) UniqueForms++;
+    
+    return UniqueForms;
 }
 
 static u8 GetPage(u8 PageNumber, u8 SwapDirection) {
@@ -114,6 +131,7 @@ static u8 GetPage(u8 PageNumber, u8 SwapDirection) {
             if (UnownCount() > 26) return 4;
             else return 5;
         }
+        if (PageNumber >= 5 && FlagGet(ReportFlags[PageNumber-5]) == FALSE) return PageNumber;
         return PageNumber + 1;
     }
     if (SwapDirection == PAGE_PREV) {
@@ -170,19 +188,28 @@ static void DisplayUnownIcon(u8 form, u16 x, u16 y) {
     gSprites[spriteId].oam.priority = 0;
 }
 
-static void PrintUnown(u8 PageNumber, u8 row, u8 col) {
-    u8 form = row + (PageNumber-1) * UNOWN_PER_PAGE;
-    DisplayUnownIcon(form, 48 + col*88, 50 + (row - col)*12);
-    PrintUnownReportText((u8 *)UnownStrings[form], 48 + col*88, 48 + (row - col)*12);
+static void PrintUnown(u8 form, u8 row, u8 col) {
+    DisplayUnownIcon(form, 48 + col * 88, 52 + (row - col) * 12);
+    PrintUnownReportText((u8 *)UnownStrings[form], 48 + col * 88, 48 + (row - col) * 12);
 }
 
 static void PrintUnownList(u8 PageNumber) {
-    u8 row, col, max;
-    max = UnownCount();
-    if (max > (PageNumber * UNOWN_PER_PAGE)) max = PageNumber * UNOWN_PER_PAGE;
-    if (max > 28) max = 28;
-    for (row = 0, col = 0; row < max-(PageNumber-1) * UNOWN_PER_PAGE; row++, col ^= 1) {
-        PrintUnown(PageNumber, row, col);
+    // u8 row, col, max;
+    // max = UnownCount();
+    // if (max > (PageNumber * UNOWN_PER_PAGE)) max = PageNumber * UNOWN_PER_PAGE;
+    // if (max > 28) max = 28;
+    // for (row = 0, col = 0; row < max-(PageNumber-1) * UNOWN_PER_PAGE; row++, col ^= 1) {
+        // PrintUnown(row + (PageNumber-1) * UNOWN_PER_PAGE, row, col);        
+    // }
+
+    for (u32 CaughtUnowns, form = 0, row = 0, col = 0; form < 28; form++) {
+        if (row >= UNOWN_PER_PAGE) break;
+        CaughtUnowns = GetCaughtUnowns();
+        if (CaughtUnowns & (1 << form)) {
+            PrintUnown(form, row, col);
+            row++;
+            col ^= 1;
+        }
     }
     PutWindowTilemap(0);
     CopyWindowToVram(0, 3);

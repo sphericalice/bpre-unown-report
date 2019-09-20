@@ -122,3 +122,7 @@ static const u8 *UnownStrings[] = {
 static const u8 *ReportStrings[] = {
     gText_Report1, gText_Report2, gText_Report3, gText_Report4, gText_Report5, gText_Report6
 };
+
+static const u16 ReportFlags[] = {
+    FLAG_REPORT2, FLAG_REPORT3, FLAG_REPORT4, FLAG_REPORT5, FLAG_REPORT6
+};
