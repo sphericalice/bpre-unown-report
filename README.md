@@ -68,13 +68,15 @@ The item requires some additional configuration to work as intended, however.
 
 The `Pocket` should be `02 Key Items`. The `Type` should be `01 Out of battle`.
 
+Of course, you can change the item's sprite and description at your leisure.
+
 #### How can I add extra pages to the Unown Report?
 
 At the moment, the page system is pretty poorly coded, so expanding it will require a familiarity with C to simply edit the source yourself. (Hopefully it is readable enough, but I may revisit this in the future to refactor this aspect of the code.)
 
 ### Caveats
 
-* This code alters the move command 0xF1, which is called by the battle system upon a Pokémon's capture to try and set the Pokédex flags. If your ROM hack has already changed this function, you may need to add your changes from vanilla to the `atkF1_trysetcaughtmondexflags` function in `src/unown_report.c`.
+* This code alters the move command `0xF1`, which is called by the battle system upon a Pokémon's capture to try and set the Pokédex flags. If your ROM hack has already changed this function, you may need to add your changes from vanilla to the `atkF1_trysetcaughtmondexflags` function in `src/unown_report.c`.
 
 * At the moment, this code does not register new Unown forms obtained through trading, `givepokemon`, Mystery Gift, or hatching from Eggs -- only those captured in battle. I will most likely update this with support for these methods of obtaining Unown eventually, though.
 
