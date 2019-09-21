@@ -5,7 +5,7 @@
 
 extern u8 gDecompressionBuffer[0x4000];
 
-void LZDecompressWram(const u32 *src, void *dest);
+void LZDecompressWram(const short unsigned int *src, void *dest);
 void LZDecompressVram(const u32 *src, void *dest);
 
 u16 LoadCompressedSpriteSheet(const struct CompressedSpriteSheet *src);

@@ -20,10 +20,10 @@ void InitUnownReportBg(void) {
 }
 
 void PrintInstructionsBar(void) {
-    u8 color[3] = {0, 2, 3};
-
+    u8 col[3] = {0, 1, 2};
+ 
     FillWindowPixelBuffer(1, PIXEL_FILL(0));
-    AddTextPrinterParameterized3(1, 0, 2, 1, color, 0, (u8 *)gText_Instructions);
+    AddTextPrinterParameterized3(1, 0, 2, 1, col, 0, (u8 *)gText_Instructions);
     PutWindowTilemap(1);
     CopyWindowToVram(1, 3);
 }
@@ -107,35 +107,19 @@ void SetCaughtUnown(u16 UnownForm) {
     VarSet(VAR_UNOWNCAUGHT_PT2, (CaughtUnown & 0x0000FFFF));
 }
 
-void atkF1_trysetcaughtmondexflags(void) {
-    u16 species = GetMonData(&gEnemyParty[0], MON_DATA_SPECIES, NULL);
-    u32 personality = GetMonData(&gEnemyParty[0], MON_DATA_PERSONALITY, NULL);
-
-    if (species == SPECIES_UNOWN) {
-        SetCaughtUnown(GetUnownLetterByPersonality(personality));
-    }
-
-    if (GetSetPokedexFlag(SpeciesToNationalPokedexNum(species), FLAG_GET_CAUGHT)) {
-        gBattlescriptCurrInstr = T1_READ_PTR(gBattlescriptCurrInstr + 1);
-    } else {
-        HandleSetPokedexFlag(SpeciesToNationalPokedexNum(species), FLAG_SET_CAUGHT, personality);
-        gBattlescriptCurrInstr += 5;
-    }
-}
-
 u8 UnownCount(void) {
     u8 UniqueForms = 0;
-
     u32 CaughtUnown = GetCaughtUnown();
-
     for (u8 i = 0; i < 28; i++)
         if (CaughtUnown & (1 << i)) UniqueForms++;
+
     return UniqueForms;
 }
 
 u8 GetPage(u8 taskId, u8 SwapDirection) {
     u8 PageNumber = gTasks[taskId].currentPage;
     u8 count = UnownCount();
+
     if (SwapDirection == PAGE_NEXT) {
         if (PageNumber == MAX_PAGE_COUNT) return PageNumber;
         if (PageNumber == 0) {
@@ -154,9 +138,11 @@ u8 GetPage(u8 taskId, u8 SwapDirection) {
             if (count > 26) return 4;
             else return 5;
         }
-        if (PageNumber >= 5 && FlagGet(ReportFlags[PageNumber-5]) == FALSE) return PageNumber;
+        if (PageNumber >= 5 && FlagGet(ReportFlags[PageNumber-5]) == FALSE)
+            return PageNumber;
         return PageNumber + 1;
     }
+
     if (SwapDirection == PAGE_PREV) {
         if (PageNumber == 0) return PageNumber;
         if (PageNumber == 5) {
@@ -168,18 +154,20 @@ u8 GetPage(u8 taskId, u8 SwapDirection) {
         }
         return PageNumber - 1;
     }
+
     return PageNumber;
 }
 
 s8 GetPageNumber(u8 taskId, u8 SwapDirection) {
     struct Task *task = &gTasks[taskId];
     if (GetPage(taskId, SwapDirection) != task->currentPage) {
-        task->currentPage = GetPage(taskId, SwapDirection);            
+        task->currentPage = GetPage(taskId, SwapDirection);
         FillWindowPixelBuffer(0, 0);
         ClearWindowTilemap(0);
         CopyWindowToVram(0, 3);
         return task->currentPage;
     }
+
     return -1;
 }
 
@@ -188,7 +176,10 @@ void PrintFirstPage(void) {
     u16 width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
     PrintUnownReportText(gStringVar4, 104 - (width >> 1), 48);
 
-    ConvertIntToDecimalStringN(gStringVar1, UnownCount(), STR_CONV_MODE_LEFT_ALIGN, 4);
+    ConvertIntToDecimalStringN(gStringVar1,
+                               UnownCount(),
+                               STR_CONV_MODE_LEFT_ALIGN,
+                               4);
     StringExpandPlaceholders(gStringVar4, gText_CurrentKinds);
     width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
     PrintUnownReportText(gStringVar4, 104 - (width >> 1), 72);
@@ -198,35 +189,44 @@ u32 UnownFormToPID(u8 form) {
     // In Generation III, Unown's form is determined by the composite value of
     // the least significant 2 bits of each byte in its PID, so we need to
     // "reverse engineer" this PID for the wanted Unown icon
-    return ((form & 0b00110000) << 12) | ((form & 0b00001100) << 6) | (form & 0b00000011);
+    return ((form & 0b00110000) << 12)
+         | ((form & 0b00001100) << 6)
+         | (form & 0b00000011);
 }
 
 void DisplayUnownIcon(u8 form, u16 x, u16 y) {
     u8 spriteId;
     LoadMonIconPalettes();
-    spriteId = CreateMonIcon(SPECIES_UNOWN, SpriteCallbackDummy, x, y, 0, UnownFormToPID(form), TRUE);
+    spriteId = CreateMonIcon(SPECIES_UNOWN,
+                             SpriteCallbackDummy,
+                             x,
+                             y,
+                             0,
+                             UnownFormToPID(form),
+                             TRUE);
     gSprites[spriteId].oam.priority = 0;
 }
 
 void PrintUnown(u8 form, u8 row, u8 col) {
-    DisplayUnownIcon(form, 48 + col * 88, 52 + (row - col) * 12);
-    PrintUnownReportText((u8 *)UnownStrings[form], 48 + col * 88, 48 + (row - col) * 12);
+    u16 x = 48 + col * 88;
+    u16 y = 48 + (row - col) * 12;
+    DisplayUnownIcon(form, x, y + 4);
+    PrintUnownReportText((u8 *)UnownStrings[form], x, y);
 }
 
 void PrintUnownList(u8 taskId, u8 PageNumber) {
     struct Task *task = &gTasks[taskId];
-    
     u32 CaughtUnown = GetCaughtUnown();
-    u8 currBit = 0;
-    if (PageNumber > 0) currBit = task->data[1 + PageNumber];
-    for (u8 row = 0, col = 0; row < UNOWN_PER_PAGE && currBit <= 28; currBit++) {
-        if (CaughtUnown & (1 << currBit)) {
-            PrintUnown(currBit, row, col);
+    u8 bit = 0;
+    if (PageNumber > 0) bit = task->data[1 + PageNumber];
+    for (u8 row = 0, col = 0; row < UNOWN_PER_PAGE && bit <= 28; bit++) {
+        if (CaughtUnown & (1 << bit)) {
+            PrintUnown(bit, row, col);
             row++;
             col ^= 1;
-        }   
+        }
     }
-    if (PageNumber < 3) task->data[2 + PageNumber] = currBit;
+    if (PageNumber < 3) task->data[2 + PageNumber] = bit;
 }
 
 void PrintReportPage(u8 PageNumber) {
@@ -264,8 +264,13 @@ void SwapPage(u8 taskId, u8 SwapDirection) {
 }
 
 void Task_UnownReportWaitForKeyPress(u8 taskId) {
-    if (gMain.newAndRepeatedKeys & (DPAD_RIGHT | DPAD_DOWN) || gMain.newKeys & A_BUTTON) SwapPage(taskId, PAGE_NEXT);
-    if (gMain.newAndRepeatedKeys & (DPAD_LEFT | DPAD_UP)) SwapPage(taskId, PAGE_PREV);
+    if (gMain.newAndRepeatedKeys & (DPAD_RIGHT | DPAD_DOWN)
+        || gMain.newKeys & A_BUTTON)
+        SwapPage(taskId, PAGE_NEXT);
+
+    if (gMain.newAndRepeatedKeys & (DPAD_LEFT | DPAD_UP))
+        SwapPage(taskId, PAGE_PREV);
+
     if (gMain.newKeys & (B_BUTTON)) {
         BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, RGB_BLACK);
         gTasks[taskId].func = Task_UnownReportFadeOut;
@@ -281,13 +286,31 @@ void Task_UnownReportFadeOut(u8 taskId) {
     }
 }
 
-void PrintUnownReportText(u8 *text, u8 var1, u8 var2) {
-    u8 color[3] = {0, 2, 3};
-
-    AddTextPrinterParameterized4(0, 1, var1, var2, 0, 0, color, -1, text);
+void PrintUnownReportText(u8 *text, u8 x, u8 y) {
+    u8 col[3] = {0, 2, 3};
+    AddTextPrinterParameterized4(0, 1, x, y, 0, 0, col, -1, text);
 }
 
 void Special_ShowUnownReport(void) {
     SetMainCallback2(CB2_ShowUnownReport);
     ScriptContext2_Enable();
+}
+
+void atkF1_trysetcaughtmondexflags(void) {
+    u16 species = GetMonData(&gEnemyParty[0], MON_DATA_SPECIES, NULL);
+    u32 personality = GetMonData(&gEnemyParty[0], MON_DATA_PERSONALITY, NULL);
+
+    if (species == SPECIES_UNOWN) {
+        SetCaughtUnown(GetUnownLetterByPersonality(personality));
+    }
+
+    if (GetSetPokedexFlag(SpeciesToNationalPokedexNum(species),
+                          FLAG_GET_CAUGHT)) {
+        gBattlescriptCurrInstr = T1_READ_PTR(gBattlescriptCurrInstr + 1);
+    } else {
+        HandleSetPokedexFlag(SpeciesToNationalPokedexNum(species),
+                             FLAG_SET_CAUGHT,
+                             personality);
+        gBattlescriptCurrInstr += 5;
+    }
 }

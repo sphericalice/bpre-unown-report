@@ -37,8 +37,9 @@
 #define MAX_PAGE_COUNT 10
 #define currentPage data[0]
 
+void atkF1_trysetcaughtmondexflags(void);
 void Special_ShowUnownReport(void);
-void PrintUnownReportText(u8 *text, u8 var1, u8 var2);
+void PrintUnownReportText(u8 *text, u8 x, u8 y);
 void Task_UnownReportFadeOut(u8 taskId);
 void Task_UnownReportWaitForKeyPress(u8 taskId);
 void SwapPage(u8 taskId, u8 SwapDirection);
@@ -51,7 +52,6 @@ void PrintFirstPage(void);
 s8 GetPageNumber(u8 taskId, u8 SwapDirection);
 u8 GetPage(u8 taskId, u8 SwapDirection);
 u8 UnownCount(void);
-void atkF1_trysetcaughtmondexflags(void);
 void SetCaughtUnown(u16 UnownForm);
 u32 GetCaughtUnown(void);
 void Task_UnownReportFadeIn(u8 taskId);
@@ -129,7 +129,8 @@ static const u8 *UnownStrings[] = {
 };
 
 static const u8 *ReportStrings[] = {
-    gText_Report1, gText_Report2, gText_Report3, gText_Report4, gText_Report5, gText_Report6
+    gText_Report1, gText_Report2, gText_Report3,
+    gText_Report4, gText_Report5, gText_Report6
 };
 
 static const u16 ReportFlags[] = {

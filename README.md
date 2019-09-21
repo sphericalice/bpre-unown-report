@@ -20,17 +20,6 @@ $ ./build_tools.sh
 
 Copy your ROM to this directory and rename it `rom.gba`.
 
-#### Editing any graphics
-
-The makefile does not build or rebuild the graphics used by this project, so you will have to update them manually using grit:
-
-```shell
-$ cd include/graphics
-$ grit unown.png -gt -gB4 -mLf -mRtpf -pn 16 -ftc -fh!
-```
-
-You should add grit to your PATH.
-
 #### Building the project itself
 
 The build system is smart enough to find enough free space on its own.

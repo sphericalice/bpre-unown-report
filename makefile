@@ -12,6 +12,7 @@ include config.mk
 SRC_FILES = $(wildcard src/*.c)
 OBJ_FILES = $(SRC_FILES:src/%.c=build/src/%.o)
 MAIN_ASM_INCLUDES = $(wildcard *.s)
+IMG_FILES = $(wildcard include/graphics/*.png)
 
 CFLAGS = -O2 -mlong-calls -Wall -Wextra -mthumb -mno-thumb-interwork -fno-inline -fno-builtin -std=gnu11 -mabi=apcs-gnu -mcpu=arm7tdmi -march=armv4t -mtune=arm7tdmi -x c -c -I include -D SPECIAL_UnownReport=$(SPECIAL_UnownReport)
 
@@ -30,6 +31,9 @@ ARMIPS_FLAGS = -sym test.sym -equ SPECIAL_UnownReport $(SPECIAL_UnownReport)
 PYTHON ?= python
 FREESIA = $(PYTHON) tools/freesia
 FREESIAFLAGS = --rom rom.gba --start-at $(START_AT)
+
+GRIT ?= grit
+GRIT_FLAGS = -gt -gB4 -gzl -mLf -mRtpf -mzl -pn 16 -ftc -fh!
 
 START_AT ?= 0x0871A240
 
@@ -51,6 +55,9 @@ md5: test.gba
 	@md5sum test.gba
 
 # ------------------------------------------------------------------------------
+
+include/graphics/%.c:  include/graphics/%.png
+	$(GRIT) $(IMG_FILES) $(GRIT_FLAGS) -o "$@"
 
 build/src/%.o: src/%.c charmap.txt
 	@mkdir -p build/src
