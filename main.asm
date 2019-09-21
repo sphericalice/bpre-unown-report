@@ -14,4 +14,7 @@
 .org gSpecials + SPECIAL_UnownReport * SIZEOF_PTR
 .word Special_ShowUnownReport |1
 
+.org gMoveCommands + 0xF1 * SIZEOF_PTR
+.word atkF1_trysetcaughtmondexflags |1
+
 .close

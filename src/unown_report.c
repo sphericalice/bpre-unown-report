@@ -92,9 +92,33 @@ static void Task_UnownReportFadeIn(u8 taskId) {
 
 u32 GetCaughtUnown() {
     u32 CaughtUnown;
-//  CaughtUnown = VarGet(VAR_UNOWNCAUGHT_PT1) << 16 | VarGet(VAR_UNOWNCAUGHT_PT2);
-    CaughtUnown = 0b00001111111111111111111111111111;
+//  VarSet(VAR_UNOWNCAUGHT_PT1, 0b0000101000101110);
+//  VarSet(VAR_UNOWNCAUGHT_PT2, 0b1010100111100001);
+    CaughtUnown = VarGet(VAR_UNOWNCAUGHT_PT1) << 16 | VarGet(VAR_UNOWNCAUGHT_PT2);
     return CaughtUnown;
+}
+
+void SetCaughtUnown(u16 UnownForm) {
+    u32 CaughtUnown = GetCaughtUnown();
+    CaughtUnown |= 1 << UnownForm;
+    VarSet(VAR_UNOWNCAUGHT_PT1, (CaughtUnown & 0xFFFF0000) >> 16);
+    VarSet(VAR_UNOWNCAUGHT_PT2, (CaughtUnown & 0x0000FFFF));
+}
+
+void atkF1_trysetcaughtmondexflags(void) {
+    u16 species = GetMonData(&gEnemyParty[0], MON_DATA_SPECIES, NULL);
+    u32 personality = GetMonData(&gEnemyParty[0], MON_DATA_PERSONALITY, NULL);
+
+    if (species == PKMN_UNOWN) {
+        SetCaughtUnown(GetUnownLetterByPersonality(personality));
+    }
+
+    if (GetSetPokedexFlag(SpeciesToNationalPokedexNum(species), FLAG_GET_CAUGHT)) {
+        gBattlescriptCurrInstr = T1_READ_PTR(gBattlescriptCurrInstr + 1);
+    } else {
+        HandleSetPokedexFlag(SpeciesToNationalPokedexNum(species), FLAG_SET_CAUGHT, personality);
+        gBattlescriptCurrInstr += 5;
+    }
 }
 
 u8 UnownCount() {
