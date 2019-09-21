@@ -6,6 +6,8 @@ The Johto-based games introduced an item called the Unown Report, which logs the
 
 See [here](https://gist.github.com/Zeturic/db1611cc7b17c3140f9b9af32e1b596b) for the prequisites and help in installing them.
 
+Not included in the above link is the dependency of [grit](https://www.coranac.com/man/grit/html/grit.htm), which you should download and add to your PATH.
+
 #### Cloning the repo and building the tools
 
 Open your terminal to whatever folder you want to download this repo into. Then, do the following to download the repo and build the included tools:
