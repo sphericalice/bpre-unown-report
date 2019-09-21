@@ -4,7 +4,7 @@
 
 The Johto-based games introduced an item called the [Unown Report](https://bulbapedia.bulbagarden.net/wiki/Unown_Report), which logs the Unown forms you have captured, and logs the player's research into the Ruins of Alph as they progress through the quest.
 
-This ports that item to FR ROMs, specifically for the ROM hack [Pokémon Gaia Version](http://www.pokecommunity.com/showthread.php?t=326118).
+This ports that item to FR v1.0 ROMs.
 
 ### Build Instructions
 
