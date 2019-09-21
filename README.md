@@ -1,5 +1,7 @@
 ## Unown Report
 
+![](http://sphericalice.com/romhacking/hacks/gaia/screenshots/unown_report.gif)
+
 The Johto-based games introduced an item called the [Unown Report](https://bulbapedia.bulbagarden.net/wiki/Unown_Report), which logs the Unown forms you have captured, and logs the player's research into the Ruins of Alph as they progress through the quest.
 
 This ports that item to FR ROMs, specifically for the ROM hack [Pokémon Gaia Version](http://www.pokecommunity.com/showthread.php?t=326118).
@@ -69,6 +71,12 @@ The item requires some additional configuration to work as intended, however.
 The `Pocket` should be `02 Key Items`. The `Type` should be `01 Out of battle`.
 
 Of course, you can change the item's sprite and description at your leisure.
+
+#### How can I change the background image?
+
+Just edit the `unown.png` image directly in `include/graphics/`, save it, close it, and run `make`.
+
+Of course, the usual restrictions for these types of tilemaps apply; this only uses one palette, so there is a limit of 15 colours plus transparency. I recommend keeping the size of 256x160, too, but bear in mind that only the leftmost 240 pixels are visible.
 
 #### How can I add extra pages to the Unown Report?
 
