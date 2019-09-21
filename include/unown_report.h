@@ -28,34 +28,40 @@
 #include "battle.h"
 #include "pokemon_icon.h"
 #include "constants/songs.h"
+#include "constants/species.h"
 #include "graphics/unown.c"
 
-u8 UnownCount();
-static u8 GetPage(u8 PageNumber, u8 SwapDirection);
-static void PrintUnownList(u8,u8 PageNumber);
-static void PrintReportPage(u8 PageNumber);
-static void PrintFirstPage();
-static s8 GetPageNumber(u8 taskId, u8 SwapDirection);
-static void SwapPage(u8 taskId, u8 SwapDirection);
-void CB2_UnownReport();
-void UnownReport();
-static void PrintInstructionsBar(void);
-void dp13_810BB8C();
-static void MainCB2(void);
-static void Task_UnownReportFadeIn(u8);
-static void Task_UnownReportWaitForKeyPress(u8);
-static void Task_UnownReportFadeOut(u8);
-static void DisplayUnownIcon(u8 form, u16 x, u16 y);
-static void InitUnownReportBg(void);
-static void InitUnownReportWindow(void);
-static void PrintUnownReportText(u8 *, u8, u8);
-
-#define MAX_PAGE_COUNT 10
-#define UNOWN_PER_PAGE 8
 #define PAGE_NEXT 0
 #define PAGE_PREV 1
+#define UNOWN_PER_PAGE 8
+#define MAX_PAGE_COUNT 10
 #define currentPage data[0]
-#define PKMN_UNOWN 201
+
+void Special_ShowUnownReport(void);
+void PrintUnownReportText(u8 *text, u8 var1, u8 var2);
+void Task_UnownReportFadeOut(u8 taskId);
+void Task_UnownReportWaitForKeyPress(u8 taskId);
+void SwapPage(u8 taskId, u8 SwapDirection);
+void PrintReportPage(u8 PageNumber);
+void PrintUnownList(u8 taskId, u8 PageNumber);
+void PrintUnown(u8 form, u8 row, u8 col);
+void DisplayUnownIcon(u8 form, u16 x, u16 y);
+u32 UnownFormToPID(u8 form);
+void PrintFirstPage(void);
+s8 GetPageNumber(u8 taskId, u8 SwapDirection);
+u8 GetPage(u8 taskId, u8 SwapDirection);
+u8 UnownCount(void);
+void atkF1_trysetcaughtmondexflags(void);
+void SetCaughtUnown(u16 UnownForm);
+u32 GetCaughtUnown(void);
+void Task_UnownReportFadeIn(u8 taskId);
+void MainCB2(void);
+void CB2_ShowUnownReport(void);
+void InitUnownReportDisplay(void);
+void InitUnownReportWindow(void);
+void PrintInstructionsBar(void);
+void InitUnownReportBg(void);
+void VBlankCB(void);
 
 u8 *sTilemapBuffer;
 
@@ -101,7 +107,7 @@ static const struct WindowTemplate sUnownReportWinTemplates[3] =
         .paletteNum = 15,
         .baseBlock = 1
     },
-    {
+    { // Instructions
         .bg = 0,
         .tilemapLeft = 0,
         .tilemapTop = 0,

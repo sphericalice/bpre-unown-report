@@ -1,12 +1,12 @@
 #include "unown_report.h"
 
-static void VBlankCB(void) {
+void VBlankCB(void) {
     LoadOam();
     ProcessSpriteCopyRequests();
     TransferPlttBuffer();
 }
 
-static void InitUnownReportBg(void) {
+void InitUnownReportBg(void) {
     ResetBgsAndClearDma3BusyFlags(0);
     InitBgsFromTemplates(0, sUnownReportBgTemplates, 3);
     SetBgTilemapBuffer(2, sTilemapBuffer);
@@ -19,7 +19,7 @@ static void InitUnownReportBg(void) {
     SetGpuReg(REG_OFFSET_BLDY, DISPCNT_MODE_0);
 }
 
-static void PrintInstructionsBar(void) {
+void PrintInstructionsBar(void) {
     u8 color[3] = {0, 2, 3};
 
     FillWindowPixelBuffer(1, PIXEL_FILL(0));
@@ -28,12 +28,19 @@ static void PrintInstructionsBar(void) {
     CopyWindowToVram(1, 3);
 }
 
-static void InitUnownReportWindow(void) {
+void InitUnownReportWindow(void) {
     InitWindows(sUnownReportWinTemplates);
     DeactivateAllTextPrinters();
     LoadPalette(unownPal, 0xC0, 0x20);
     FillWindowPixelBuffer(0, PIXEL_FILL(0));
     PutWindowTilemap(0);
+}
+
+void InitUnownReportDisplay(void) {
+    PrintInstructionsBar();
+    PrintFirstPage();
+    PutWindowTilemap(0);
+    CopyWindowToVram(0, 3);
 }
 
 void CB2_ShowUnownReport(void) {
@@ -68,8 +75,7 @@ void CB2_ShowUnownReport(void) {
     while (free_temp_tile_data_buffers_if_possible());
     LZDecompressWram(unownMap, sTilemapBuffer);
     CopyBgTilemapBufferToVram(2);
-    PrintInstructionsBar();
-    PrintFirstPage();
+    InitUnownReportDisplay();
     BlendPalettes(-1, 16, 0);
     BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB_BLACK);
     EnableInterrupts(1);
@@ -78,24 +84,20 @@ void CB2_ShowUnownReport(void) {
     CreateTask(Task_UnownReportFadeIn, 0);
 }
 
-static void MainCB2(void) {
+void MainCB2(void) {
     RunTasks();
     AnimateSprites();
     BuildOamBuffer();
     UpdatePaletteFade();
 }
 
-static void Task_UnownReportFadeIn(u8 taskId) {
+void Task_UnownReportFadeIn(u8 taskId) {
     if (!gPaletteFade.active)
         gTasks[taskId].func = Task_UnownReportWaitForKeyPress;
 }
 
-u32 GetCaughtUnown() {
-    u32 CaughtUnown;
-//  VarSet(VAR_UNOWNCAUGHT_PT1, 0b0000101000101110);
-//  VarSet(VAR_UNOWNCAUGHT_PT2, 0b1010100111100001);
-    CaughtUnown = VarGet(VAR_UNOWNCAUGHT_PT1) << 16 | VarGet(VAR_UNOWNCAUGHT_PT2);
-    return CaughtUnown;
+u32 GetCaughtUnown(void) {
+    return VarGet(VAR_UNOWNCAUGHT_PT1) << 16 | VarGet(VAR_UNOWNCAUGHT_PT2);
 }
 
 void SetCaughtUnown(u16 UnownForm) {
@@ -109,7 +111,7 @@ void atkF1_trysetcaughtmondexflags(void) {
     u16 species = GetMonData(&gEnemyParty[0], MON_DATA_SPECIES, NULL);
     u32 personality = GetMonData(&gEnemyParty[0], MON_DATA_PERSONALITY, NULL);
 
-    if (species == PKMN_UNOWN) {
+    if (species == SPECIES_UNOWN) {
         SetCaughtUnown(GetUnownLetterByPersonality(personality));
     }
 
@@ -121,23 +123,19 @@ void atkF1_trysetcaughtmondexflags(void) {
     }
 }
 
-u8 UnownCount() {
+u8 UnownCount(void) {
+    u8 UniqueForms = 0;
+
     u32 CaughtUnown = GetCaughtUnown();
 
-    u8 UniqueForms = 0;
     for (u8 i = 0; i < 28; i++)
         if (CaughtUnown & (1 << i)) UniqueForms++;
-    return UniqueForms;   
+    return UniqueForms;
 }
 
-void PrepareUnownData(u8 taskId);
-
-static u8 GetPage(u8 taskId, u8 SwapDirection) {
-    u8 PageNumber;
-    struct Task *task = &gTasks[taskId];
-    PageNumber = task->data[0];
-    u8 count;
-    count = UnownCount();
+u8 GetPage(u8 taskId, u8 SwapDirection) {
+    u8 PageNumber = gTasks[taskId].currentPage;
+    u8 count = UnownCount();
     if (SwapDirection == PAGE_NEXT) {
         if (PageNumber == MAX_PAGE_COUNT) return PageNumber;
         if (PageNumber == 0) {
@@ -173,7 +171,7 @@ static u8 GetPage(u8 taskId, u8 SwapDirection) {
     return PageNumber;
 }
 
-static s8 GetPageNumber(u8 taskId, u8 SwapDirection) {
+s8 GetPageNumber(u8 taskId, u8 SwapDirection) {
     struct Task *task = &gTasks[taskId];
     if (GetPage(taskId, SwapDirection) != task->currentPage) {
         task->currentPage = GetPage(taskId, SwapDirection);            
@@ -185,41 +183,37 @@ static s8 GetPageNumber(u8 taskId, u8 SwapDirection) {
     return -1;
 }
 
-static void PrintFirstPage() {
-    u8 count = UnownCount();
-    u16 width = 0;
+void PrintFirstPage(void) {
     StringExpandPlaceholders(gStringVar4, gText_PlayersUnownReport);
-    width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
+    u16 width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
     PrintUnownReportText(gStringVar4, 104 - (width >> 1), 48);
 
-    ConvertIntToDecimalStringN(gStringVar1, count, STR_CONV_MODE_LEFT_ALIGN, 4);
+    ConvertIntToDecimalStringN(gStringVar1, UnownCount(), STR_CONV_MODE_LEFT_ALIGN, 4);
     StringExpandPlaceholders(gStringVar4, gText_CurrentKinds);
     width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
     PrintUnownReportText(gStringVar4, 104 - (width >> 1), 72);
-    PutWindowTilemap(0);
-    CopyWindowToVram(0, 3);
 }
 
-static u32 UnownFormToPID(u8 form) {
+u32 UnownFormToPID(u8 form) {
     // In Generation III, Unown's form is determined by the composite value of
     // the least significant 2 bits of each byte in its PID, so we need to
     // "reverse engineer" this PID for the wanted Unown icon
     return ((form & 0b00110000) << 12) | ((form & 0b00001100) << 6) | (form & 0b00000011);
 }
 
-static void DisplayUnownIcon(u8 form, u16 x, u16 y) {
+void DisplayUnownIcon(u8 form, u16 x, u16 y) {
     u8 spriteId;
     LoadMonIconPalettes();
-    spriteId = CreateMonIcon(PKMN_UNOWN, SpriteCallbackDummy, x, y, 0, UnownFormToPID(form), TRUE);
+    spriteId = CreateMonIcon(SPECIES_UNOWN, SpriteCallbackDummy, x, y, 0, UnownFormToPID(form), TRUE);
     gSprites[spriteId].oam.priority = 0;
 }
 
-static void PrintUnown(u8 form, u8 row, u8 col) {
+void PrintUnown(u8 form, u8 row, u8 col) {
     DisplayUnownIcon(form, 48 + col * 88, 52 + (row - col) * 12);
     PrintUnownReportText((u8 *)UnownStrings[form], 48 + col * 88, 48 + (row - col) * 12);
 }
 
-static void PrintUnownList(u8 taskId, u8 PageNumber) {
+void PrintUnownList(u8 taskId, u8 PageNumber) {
     struct Task *task = &gTasks[taskId];
     
     u32 CaughtUnown = GetCaughtUnown();
@@ -233,18 +227,13 @@ static void PrintUnownList(u8 taskId, u8 PageNumber) {
         }   
     }
     if (PageNumber < 3) task->data[2 + PageNumber] = currBit;
-    
-    PutWindowTilemap(0);
-    CopyWindowToVram(0, 3);
 }
 
-static void PrintReportPage(u8 PageNumber) {
+void PrintReportPage(u8 PageNumber) {
     PrintUnownReportText((u8 *)ReportStrings[PageNumber], 16, 48);
-    PutWindowTilemap(0);
-    CopyWindowToVram(0, 3);
 }
 
-static void SwapPage(u8 taskId, u8 SwapDirection) {
+void SwapPage(u8 taskId, u8 SwapDirection) {
     s8 PageNumber = GetPageNumber(taskId, SwapDirection);
     if (PageNumber != -1) {
         ResetSpriteData();
@@ -270,9 +259,11 @@ static void SwapPage(u8 taskId, u8 SwapDirection) {
                 break;
         }
     }
+    PutWindowTilemap(0);
+    CopyWindowToVram(0, 3);
 }
 
-static void Task_UnownReportWaitForKeyPress(u8 taskId) {
+void Task_UnownReportWaitForKeyPress(u8 taskId) {
     if (gMain.newAndRepeatedKeys & (DPAD_RIGHT | DPAD_DOWN) || gMain.newKeys & A_BUTTON) SwapPage(taskId, PAGE_NEXT);
     if (gMain.newAndRepeatedKeys & (DPAD_LEFT | DPAD_UP)) SwapPage(taskId, PAGE_PREV);
     if (gMain.newKeys & (B_BUTTON)) {
@@ -281,7 +272,7 @@ static void Task_UnownReportWaitForKeyPress(u8 taskId) {
     }
 }
 
-static void Task_UnownReportFadeOut(u8 taskId) {
+void Task_UnownReportFadeOut(u8 taskId) {
     if (!gPaletteFade.active) {
         Free(sTilemapBuffer);
         FreeAllWindowBuffers();
@@ -290,7 +281,7 @@ static void Task_UnownReportFadeOut(u8 taskId) {
     }
 }
 
-static void PrintUnownReportText(u8 *text, u8 var1, u8 var2) {
+void PrintUnownReportText(u8 *text, u8 var1, u8 var2) {
     u8 color[3] = {0, 2, 3};
 
     AddTextPrinterParameterized4(0, 1, var1, var2, 0, 0, color, -1, text);
