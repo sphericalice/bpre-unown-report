@@ -38,7 +38,6 @@
 #define currentPage data[0]
 
 void atkF1_trysetcaughtmondexflags(void);
-void Special_ShowUnownReport(void);
 void PrintUnownReportText(u8 *text, u8 x, u8 y);
 void Task_UnownReportFadeOut(u8 taskId);
 void Task_UnownReportWaitForKeyPress(u8 taskId);
@@ -63,7 +62,16 @@ void PrintInstructionsBar(void);
 void InitUnownReportBg(void);
 void VBlankCB(void);
 
+void sub_80A1184();
+void sub_80CCB68();
+void overworld_free_bgmaps();
+void fade_screen(u8,u8);
+TaskFunc sub_80A1CC0;
+void set_bag_callback(void *);
+void unknown_ItemMenu_Confirm(u8);
+
 u8 *sTilemapBuffer;
+bool8 OpenedFromOW;
 
 static const struct BgTemplate sUnownReportBgTemplates[3] =
 {

@@ -14,7 +14,7 @@ OBJ_FILES = $(SRC_FILES:src/%.c=build/src/%.o)
 MAIN_ASM_INCLUDES = $(wildcard *.s)
 IMG_FILES = $(wildcard include/graphics/*.png)
 
-CFLAGS = -O2 -mlong-calls -Wall -Wextra -mthumb -mno-thumb-interwork -fno-inline -fno-builtin -std=gnu11 -mabi=apcs-gnu -mcpu=arm7tdmi -march=armv4t -mtune=arm7tdmi -x c -c -I include -D SPECIAL_UnownReport=$(SPECIAL_UnownReport)
+CFLAGS = -O2 -mlong-calls -Wall -Wextra -mthumb -mno-thumb-interwork -fno-inline -fno-builtin -std=gnu11 -mabi=apcs-gnu -mcpu=arm7tdmi -march=armv4t -mtune=arm7tdmi -x c -c -I include -D ITEM_UnownReport=$(ITEM_UnownReport)
 
 LD = $(PREFIX)ld
 LDFLAGS = --relocatable -T rom.ld
@@ -26,7 +26,7 @@ PREPROC = tools/preproc/preproc
 SCANINC = tools/scaninc/scaninc
 
 ARMIPS ?= armips
-ARMIPS_FLAGS = -sym test.sym -equ SPECIAL_UnownReport $(SPECIAL_UnownReport)
+ARMIPS_FLAGS = -sym test.sym -equ ITEM_UnownReport $(ITEM_UnownReport)
 
 PYTHON ?= python
 FREESIA = $(PYTHON) tools/freesia

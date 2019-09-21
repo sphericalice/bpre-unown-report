@@ -21,7 +21,7 @@ void InitUnownReportBg(void) {
 
 void PrintInstructionsBar(void) {
     u8 col[3] = {0, 1, 2};
- 
+
     FillWindowPixelBuffer(1, PIXEL_FILL(0));
     AddTextPrinterParameterized3(1, 0, 2, 1, col, 0, (u8 *)gText_Instructions);
     PutWindowTilemap(1);
@@ -115,6 +115,15 @@ u8 UnownCount(void) {
 
     return UniqueForms;
 }
+
+void sub_80A1184();
+void sub_80CCB68();
+void overworld_free_bgmaps();
+void fade_screen(u8,u8);
+TaskFunc sub_80A1CC0;
+void set_bag_callback(void *);
+void unknown_ItemMenu_Confirm(u8);
+bool8 OpenedFromOW;
 
 u8 GetPage(u8 taskId, u8 SwapDirection) {
     u8 PageNumber = gTasks[taskId].currentPage;
@@ -282,7 +291,8 @@ void Task_UnownReportFadeOut(u8 taskId) {
         Free(sTilemapBuffer);
         FreeAllWindowBuffers();
         DestroyTask(taskId);
-        SetMainCallback2(CB2_ReturnToFieldContinueScriptPlayMapMusic);
+        if (OpenedFromOW == TRUE) SetMainCallback2(CB2_ReturnToFieldContinueScriptPlayMapMusic);
+        else SetMainCallback2(CB2_ReturnToBag);
     }
 }
 
@@ -291,9 +301,33 @@ void PrintUnownReportText(u8 *text, u8 x, u8 y) {
     AddTextPrinterParameterized4(0, 1, x, y, 0, 0, col, -1, text);
 }
 
-void Special_ShowUnownReport(void) {
+void UnownReport_Execute(bool8 src) {
+    OpenedFromOW = src;
     SetMainCallback2(CB2_ShowUnownReport);
-    ScriptContext2_Enable();
+}
+
+void Task_UnownReportFromOW(u8 taskId) {
+    if (!gPaletteFade.active) {
+        overworld_free_bgmaps();
+        sub_80A1184();
+        UnownReport_Execute(TRUE);
+        DestroyTask(taskId);
+    }    
+}
+
+void StartUnownReportFromBag() {
+    UnownReport_Execute(FALSE);
+}
+
+void ItemUseOutOfBattle_UnownReport(u8 taskId) {    
+    struct Task *task = &gTasks[taskId];
+    if (task->data[3]) {
+        fade_screen(1,0);
+        task->func = Task_UnownReportFromOW;
+    } else {
+        set_bag_callback(StartUnownReportFromBag);
+        unknown_ItemMenu_Confirm(taskId);
+    }
 }
 
 void atkF1_trysetcaughtmondexflags(void) {
