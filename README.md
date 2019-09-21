@@ -1,10 +1,12 @@
 ## Unown Report
 
-The Johto-based games introduced an item called the [Unown Report](https://bulbapedia.bulbagarden.net/wiki/Unown_Report), which logs the Unown forms you have captured, and logs the player's research into the Ruins of Alph as they progress through the quest. This ports that item to FR ROMs, specifically for the ROM hack [Pokémon Gaia Version](http://www.pokecommunity.com/showthread.php?t=326118).
+The Johto-based games introduced an item called the [Unown Report](https://bulbapedia.bulbagarden.net/wiki/Unown_Report), which logs the Unown forms you have captured, and logs the player's research into the Ruins of Alph as they progress through the quest.
+
+This ports that item to FR ROMs, specifically for the ROM hack [Pokémon Gaia Version](http://www.pokecommunity.com/showthread.php?t=326118).
 
 ### Build Instructions
 
-See [here](https://gist.github.com/Zeturic/db1611cc7b17c3140f9b9af32e1b596b) for the prequisites and help in installing them.
+See [here](https://gist.github.com/Zeturic/db1611cc7b17c3140f9b9af32e1b596b) for the prerequisites and help in installing them.
 
 Not included in the above link is the dependency of [grit](https://www.coranac.com/man/grit/html/grit.htm), which you should download and add to your PATH.
 
@@ -68,9 +70,13 @@ The `Pocket` should be `02 Key Items`. The `Type` should be `01 Out of battle`.
 
 #### How can I add extra pages to the Unown Report?
 
-At the moment, the page system is pretty poorly coded, so expanding it will require a familiarity with C to simply edit the source yourself.
+At the moment, the page system is pretty poorly coded, so expanding it will require a familiarity with C to simply edit the source yourself. (Hopefully it is readable enough, but I may revisit this in the future to refactor this aspect of the code.)
 
-(Hopefully it is readable enough, but I may revisit this in the future to refactor this aspect of the code.)
+### Caveats
+
+* This code alters the move command 0xF1, which is called by the battle system upon a Pokémon's capture to try and set the Pokédex flags. If your ROM hack has already changed this function, you may need to add your changes from vanilla to the `atkF1_trysetcaughtmondexflags` function in `src/unown_report.c`.
+
+* At the moment, this code does not register new Unown forms obtained through trading, `givepokemon`, Mystery Gift, or hatching from Eggs -- only those captured in battle. I will most likely update this with support for these methods of obtaining Unown eventually, though.
 
 ### Credits
 
