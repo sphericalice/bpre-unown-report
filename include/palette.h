@@ -48,7 +48,7 @@ extern u8 gPaletteDecompressionBuffer[];
 extern u16 gPlttBufferUnfaded[];
 extern u16 gPlttBufferFaded[];
 
-void fade_screen(u8,u8);
+void FadeScreen(u8, u8);
 void LoadCompressedPalette(const u32 *, u16, u16);
 void LoadPalette(const void *, u16, u16);
 void FillPalette(u16, u16, u16);

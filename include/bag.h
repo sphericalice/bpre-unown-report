@@ -1,7 +1,7 @@
 #ifndef GUARD_BAG_H
 #define GUARD_BAG_H
 
-void set_bag_callback(void *);
-void unknown_ItemMenu_Confirm(u8);
+void SetBagCallback(void *);
+void ReturnFromItemToBag(u8);
 
 #endif // GUARD_BAG_H

@@ -34,6 +34,7 @@
 
 #define PAGE_NEXT 0
 #define PAGE_PREV 1
+#define FRONT_PAGE 0
 #define FIRST_UNOWN_LIST_PAGE 1
 #define SECOND_UNOWN_LIST_PAGE 2
 #define THIRD_UNOWN_LIST_PAGE 3
@@ -55,7 +56,7 @@ u8 UnownCount(void);
 void PrintUnownReportText(const u8 *text, u8 x, u8 y);
 void PrintReportPage(u8 ReportPageNumber);
 void PrintUnownList(u8 taskId, u8 PageNumber);
-void PrintFirstPage(void);
+void PrintFrontPage(void);
 u8 GetNewPage(u8 taskId, u8 SwapDirection);
 void SwapPage(u8 taskId, u8 SwapDirection);
 void Task_UnownReportFadeOut(u8 taskId);
@@ -64,7 +65,7 @@ void Task_UnownReportFadeIn(u8 taskId);
 void PrintInstructionsBar(void);
 void MainCB2(void);
 void VBlankCB(void);
-void InitUnownReportFirstPage(void);
+void InitUnownReportFrontPage(void);
 void InitUnownReportWindow(void);
 void InitUnownReportBg(void);
 void CB2_ShowUnownReport(void);
@@ -74,7 +75,7 @@ void StartUnownReportFromBag(void);
 void ItemUseOutOfBattle_UnownReport(u8 taskId);
 
 u8 *sTilemapBuffer;
-bool8 OpenedFromOW;
+bool8 sOpenedFromOW;
 
 static const struct BgTemplate sUnownReportBgTemplates[3] = {
     { // Unown background

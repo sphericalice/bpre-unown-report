@@ -101,7 +101,7 @@ void PrintUnownList(u8 taskId, u8 PageNumber) {
         task->bitToStartFrom[PageNumber + 1] = bit;
 }
 
-void PrintFirstPage(void) {
+void PrintFrontPage(void) {
     StringExpandPlaceholders(gStringVar4, gText_PlayersUnownReport);
     u16 width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
     PrintUnownReportText(gStringVar4, 104 - (width >> 1), 48);
@@ -132,7 +132,7 @@ u8 GetNewPage(u8 taskId, u8 SwapDirection) {
         return PageNumber + 1;
     }
 
-    if (SwapDirection == PAGE_PREV && PageNumber != 0) {
+    if (SwapDirection == PAGE_PREV && PageNumber != FRONT_PAGE) {
         if (PageNumber == FIRST_REPORT_PAGE)
             return 1 + ((count - 1) / UNOWN_PER_PAGE);
 
@@ -155,8 +155,8 @@ void SwapPage(u8 taskId, u8 SwapDirection) {
         ClearWindowTilemap(0);
         CopyWindowToVram(0, 3);
         switch (PageNumber) {
-            case 0:
-                PrintFirstPage();
+            case FRONT_PAGE:
+                PrintFrontPage();
                 break;
             case FIRST_UNOWN_LIST_PAGE:
             case SECOND_UNOWN_LIST_PAGE:
@@ -179,8 +179,8 @@ void Task_UnownReportFadeOut(u8 taskId) {
         Free(sTilemapBuffer);
         FreeAllWindowBuffers();
         DestroyTask(taskId);
-        if (OpenedFromOW == TRUE) {
-            SetMainCallback2(CB2_ReturnToFieldContinueScriptPlayMapMusic);
+        if (sOpenedFromOW == TRUE) {
+            SetMainCallback2(CB2_ReturnToField);
         } else {
             SetMainCallback2(CB2_ReturnToBag);
         }
@@ -227,9 +227,9 @@ void VBlankCB(void) {
     TransferPlttBuffer();
 }
 
-void InitUnownReportFirstPage(void) {
+void InitUnownReportFrontPage(void) {
     PrintInstructionsBar();
-    PrintFirstPage();
+    PrintFrontPage();
     PutWindowTilemap(0);
     CopyWindowToVram(0, 3);
 }
@@ -282,12 +282,12 @@ void CB2_ShowUnownReport(void) {
     sTilemapBuffer = Alloc(0x1000);
     InitUnownReportBg();
     InitUnownReportWindow();
-    reset_temp_tile_data_buffers();
-    decompress_and_copy_tile_data_to_vram(2, &unownTiles, 0, 0, 0);
-    while (free_temp_tile_data_buffers_if_possible());
+    ResetTempTileDataBuffers();
+    DecompressAndCopyTileDataToVram(2, &unownTiles, 0, 0, 0);
+    while (TryToFreeTempTileDataBuffers());
     LZDecompressWram(unownMap, sTilemapBuffer);
     CopyBgTilemapBufferToVram(2);
-    InitUnownReportFirstPage();
+    InitUnownReportFrontPage();
     BlendPalettes(-1, 16, 0);
     BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB_BLACK);
     EnableInterrupts(1);
@@ -297,13 +297,13 @@ void CB2_ShowUnownReport(void) {
 }
 
 void UnownReport_Execute(bool8 src) {
-    OpenedFromOW = src;
+    sOpenedFromOW = src;
     SetMainCallback2(CB2_ShowUnownReport);
 }
 
 void Task_UnownReportFromOW(u8 taskId) {
     if (!gPaletteFade.active) {
-        overworld_free_bgmaps();
+        FreeOverworldBGs();
         PrepareOverworldReturn();
         UnownReport_Execute(TRUE);
         DestroyTask(taskId);
@@ -317,10 +317,10 @@ void StartUnownReportFromBag(void) {
 void ItemUseOutOfBattle_UnownReport(u8 taskId) {
     struct Task *task = &gTasks[taskId];
     if (task->invokedFromOW) {
-        fade_screen(1,0);
+        FadeScreen(1,0);
         task->func = Task_UnownReportFromOW;
     } else {
-        set_bag_callback(StartUnownReportFromBag);
-        unknown_ItemMenu_Confirm(taskId);
+        SetBagCallback(StartUnownReportFromBag);
+        ReturnFromItemToBag(taskId);
     }
 }
