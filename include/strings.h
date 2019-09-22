@@ -1,7 +1,15 @@
 #pragma once
 
+#include "constants/flags.h"
+
+struct ReportPage {
+    const u8 *str;
+    const u16 flag;
+};
+
 extern const u8 gText_PlayersUnownReport[];
 extern const u8 gText_CurrentKinds[];
+extern const u8 gText_Instructions[];
 extern const u8 gText_UnownA[];
 extern const u8 gText_UnownB[];
 extern const u8 gText_UnownC[];
@@ -36,4 +44,14 @@ extern const u8 gText_Report3[];
 extern const u8 gText_Report4[];
 extern const u8 gText_Report5[];
 extern const u8 gText_Report6[];
-extern const u8 gText_Instructions[];
+
+static const struct ReportPage ReportPages[] = {
+    { gText_Report1, FLAG_REPORT2 }, // 1st report page flag isn't checked
+    { gText_Report2, FLAG_REPORT2 },
+    { gText_Report3, FLAG_REPORT3 },
+    { gText_Report4, FLAG_REPORT4 },
+    { gText_Report5, FLAG_REPORT5 },
+    { gText_Report6, FLAG_REPORT6 },
+};
+
+#define MAX_PAGE_COUNT (4 + (sizeof(ReportPages) / sizeof(struct ReportPage)))

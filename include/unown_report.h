@@ -33,9 +33,19 @@
 
 #define PAGE_NEXT 0
 #define PAGE_PREV 1
+#define FIRST_REPORT_PAGE 5
 #define UNOWN_PER_PAGE 8
-#define MAX_PAGE_COUNT 10
+#define UNOWN_FORMS 28
 #define currentPage data[0]
+
+void sub_80A1184();
+void sub_80CCB68();
+void overworld_free_bgmaps();
+void fade_screen(u8,u8);
+TaskFunc sub_80A1CC0;
+void set_bag_callback(void *);
+void unknown_ItemMenu_Confirm(u8);
+bool8 OpenedFromOW;
 
 void atkF1_trysetcaughtmondexflags(void);
 void PrintUnownReportText(u8 *text, u8 x, u8 y);
@@ -73,8 +83,7 @@ void unknown_ItemMenu_Confirm(u8);
 u8 *sTilemapBuffer;
 bool8 OpenedFromOW;
 
-static const struct BgTemplate sUnownReportBgTemplates[3] =
-{
+static const struct BgTemplate sUnownReportBgTemplates[3] = {
     { // Unown background
         .bg = 2,
         .charBaseIndex = 0,
@@ -104,8 +113,7 @@ static const struct BgTemplate sUnownReportBgTemplates[3] =
     }
 };
 
-static const struct WindowTemplate sUnownReportWinTemplates[3] =
-{
+static const struct WindowTemplate sUnownReportWinTemplates[3] = {
     { // Text
         .bg = 1,
         .tilemapLeft = 2,
@@ -134,13 +142,4 @@ static const u8 *UnownStrings[] = {
     gText_UnownP, gText_UnownQ, gText_UnownR, gText_UnownS, gText_UnownT,
     gText_UnownU, gText_UnownV, gText_UnownW, gText_UnownX, gText_UnownY,
     gText_UnownZ, gText_UnownExclamationMark, gText_UnownQuestionMark
-};
-
-static const u8 *ReportStrings[] = {
-    gText_Report1, gText_Report2, gText_Report3,
-    gText_Report4, gText_Report5, gText_Report6
-};
-
-static const u16 ReportFlags[] = {
-    FLAG_REPORT2, FLAG_REPORT3, FLAG_REPORT4, FLAG_REPORT5, FLAG_REPORT6
 };

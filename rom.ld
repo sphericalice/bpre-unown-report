@@ -86,6 +86,7 @@ BlendPalettes = 0x080714D4|1;
 EnableInterrupts = 0x08000B68|1;
 ScriptContext2_Enable = 0x08069940|1;
 FlagGet = 0x0806E6D0|1;
+FlagSet = 0x0806E680|1;
 VarGet = 0x0806E568|1;
 VarSet = 0x0806E584|1;
 GetUnownLetterByPersonality = 0x08096F98|1;

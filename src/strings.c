@@ -2,6 +2,7 @@
 
 const u8 gText_PlayersUnownReport[] = _("{PLAYER}'s Unown Report");
 const u8 gText_CurrentKinds[] = _("Number of Unown\nCurrent Kinds: {STR_VAR_1}");
+const u8 gText_Instructions[] = _("{A_BUTTON}{DPAD_NONE}PAGE {B_BUTTON}QUIT");
 const u8 gText_UnownA[] = _("Anger");
 const u8 gText_UnownB[] = _("Bear");
 const u8 gText_UnownC[] = _("Chase");
@@ -36,4 +37,3 @@ const u8 gText_Report3[] = _("Presented the Rainbow Wing to\nthe statues. The he
 const u8 gText_Report4[] = _("The red Pokémon is called Entei.\nIt hid in another chamber in\nthe Ikos Ruins, but I coaxed it\nout by approaching with a team\nof Unown spelling its name!\nThe others will be hard to find.");
 const u8 gText_Report5[] = _("Tracked the other two Pokémon\ndown. Suicune and Raikou are the\nnames of the blue and yellow\nPokémon. What could the link be\nbetween these three Pokémon,\nHo-Oh, and the Unown?");
 const u8 gText_Report6[] = _("Will was pleased to learn of\nthe secrets of the Ikos Ruins.\nWe agreed to have a rematch in\nthe depths of the Ferre Ruins,\nanother place he says he finds\nfascinating. This was fun!");
-const u8 gText_Instructions[] = _("{A_BUTTON}{DPAD_NONE}PAGE {B_BUTTON}QUIT");

@@ -97,87 +97,23 @@ void Task_UnownReportFadeIn(u8 taskId) {
 }
 
 u32 GetCaughtUnown(void) {
-    return VarGet(VAR_UNOWNCAUGHT_PT1) << 16 | VarGet(VAR_UNOWNCAUGHT_PT2);
+    return VarGet(VAR_UNOWNCAUGHT_PT2) << 16 | VarGet(VAR_UNOWNCAUGHT_PT1);
 }
 
 void SetCaughtUnown(u16 UnownForm) {
     u32 CaughtUnown = GetCaughtUnown();
     CaughtUnown |= 1 << UnownForm;
-    VarSet(VAR_UNOWNCAUGHT_PT1, (CaughtUnown & 0xFFFF0000) >> 16);
-    VarSet(VAR_UNOWNCAUGHT_PT2, (CaughtUnown & 0x0000FFFF));
+    VarSet(VAR_UNOWNCAUGHT_PT1, (CaughtUnown & 0x0000FFFF));
+    VarSet(VAR_UNOWNCAUGHT_PT2, (CaughtUnown & 0xFFFF0000) >> 16);
 }
 
 u8 UnownCount(void) {
     u8 UniqueForms = 0;
     u32 CaughtUnown = GetCaughtUnown();
-    for (u8 i = 0; i < 28; i++)
+    for (u8 i = 0; i < UNOWN_FORMS; i++)
         if (CaughtUnown & (1 << i)) UniqueForms++;
 
     return UniqueForms;
-}
-
-void sub_80A1184();
-void sub_80CCB68();
-void overworld_free_bgmaps();
-void fade_screen(u8,u8);
-TaskFunc sub_80A1CC0;
-void set_bag_callback(void *);
-void unknown_ItemMenu_Confirm(u8);
-bool8 OpenedFromOW;
-
-u8 GetPage(u8 taskId, u8 SwapDirection) {
-    u8 PageNumber = gTasks[taskId].currentPage;
-    u8 count = UnownCount();
-
-    if (SwapDirection == PAGE_NEXT) {
-        if (PageNumber == MAX_PAGE_COUNT) return PageNumber;
-        if (PageNumber == 0) {
-            if (count == 0) return 5;
-            if (count > 1) return 1;
-        }
-        if (PageNumber == 1) {
-            if (count <= UNOWN_PER_PAGE) return 5;
-            if (count > UNOWN_PER_PAGE) return 2;
-        }
-        if (PageNumber == 2) {
-            if (count <= 2 * UNOWN_PER_PAGE) return 5;
-            if (count > 2 * UNOWN_PER_PAGE) return 3;
-        }
-        if (PageNumber == 3) {
-            if (count > 26) return 4;
-            else return 5;
-        }
-        if (PageNumber >= 5 && FlagGet(ReportFlags[PageNumber-5]) == FALSE)
-            return PageNumber;
-        return PageNumber + 1;
-    }
-
-    if (SwapDirection == PAGE_PREV) {
-        if (PageNumber == 0) return PageNumber;
-        if (PageNumber == 5) {
-            if (count == 0) return 0;
-            if (count <= UNOWN_PER_PAGE) return 1;
-            if (count <= 2 * UNOWN_PER_PAGE) return 2;
-            if (count <= 26) return 3;
-            if (count > 26) return 4;
-        }
-        return PageNumber - 1;
-    }
-
-    return PageNumber;
-}
-
-s8 GetPageNumber(u8 taskId, u8 SwapDirection) {
-    struct Task *task = &gTasks[taskId];
-    if (GetPage(taskId, SwapDirection) != task->currentPage) {
-        task->currentPage = GetPage(taskId, SwapDirection);
-        FillWindowPixelBuffer(0, 0);
-        ClearWindowTilemap(0);
-        CopyWindowToVram(0, 3);
-        return task->currentPage;
-    }
-
-    return -1;
 }
 
 void PrintFirstPage(void) {
@@ -200,7 +136,7 @@ u32 UnownFormToPID(u8 form) {
     // "reverse engineer" this PID for the wanted Unown icon
     return ((form & 0b00110000) << 12)
          | ((form & 0b00001100) << 6)
-         | (form & 0b00000011);
+         | ((form & 0b00000011));
 }
 
 void DisplayUnownIcon(u8 form, u16 x, u16 y) {
@@ -227,28 +163,59 @@ void PrintUnownList(u8 taskId, u8 PageNumber) {
     struct Task *task = &gTasks[taskId];
     u32 CaughtUnown = GetCaughtUnown();
     u8 bit = 0;
-    if (PageNumber > 0) bit = task->data[1 + PageNumber];
-    for (u8 row = 0, col = 0; row < UNOWN_PER_PAGE && bit <= 28; bit++) {
+    if (PageNumber > 1) bit = task->data[PageNumber];
+    for (u8 row = 0, col = 0; row < UNOWN_PER_PAGE && bit < UNOWN_FORMS; bit++) {
         if (CaughtUnown & (1 << bit)) {
             PrintUnown(bit, row, col);
             row++;
             col ^= 1;
         }
     }
-    if (PageNumber < 3) task->data[2 + PageNumber] = bit;
+    if (PageNumber < 4) task->data[PageNumber + 1] = bit;
 }
 
-void PrintReportPage(u8 PageNumber) {
-    PrintUnownReportText((u8 *)ReportStrings[PageNumber], 16, 48);
+void PrintReportPage(u8 ReportPageNumber) {
+    PrintUnownReportText((u8 *)ReportPages[ReportPageNumber].str, 16, 48);
+}
+
+u8 GetPage(u8 taskId, u8 SwapDirection) {
+    struct Task *task = &gTasks[taskId];
+    u8 PageNumber = task->currentPage;
+    u8 count = UnownCount();
+
+    if (SwapDirection == PAGE_NEXT && PageNumber != MAX_PAGE_COUNT) {
+        if (PageNumber < FIRST_REPORT_PAGE
+            && count <= PageNumber * UNOWN_PER_PAGE)
+            return FIRST_REPORT_PAGE;
+
+        if (PageNumber >= FIRST_REPORT_PAGE
+            && FlagGet(ReportPages[PageNumber-FIRST_REPORT_PAGE].flag) == FALSE)
+            return PageNumber;
+
+        return PageNumber + 1;
+    }
+
+    if (SwapDirection == PAGE_PREV && PageNumber != 0) {
+        if (PageNumber == FIRST_REPORT_PAGE)
+            return 1 + ((count - 1) / UNOWN_PER_PAGE);
+
+        return PageNumber - 1;
+    }
+
+    return PageNumber;
 }
 
 void SwapPage(u8 taskId, u8 SwapDirection) {
-    s8 PageNumber = GetPageNumber(taskId, SwapDirection);
-    if (PageNumber != -1) {
+    struct Task *task = &gTasks[taskId];
+    u8 PageNumber = task->currentPage;
+    task->currentPage = GetPage(taskId, SwapDirection);
+    if (PageNumber != task->currentPage) {
+        PageNumber = task->currentPage;
         ResetSpriteData();
-        PlaySE(SE_SELECT);
+        FillWindowPixelBuffer(0, 0);
+        ClearWindowTilemap(0);
+        CopyWindowToVram(0, 3);
         switch (PageNumber) {
-            default:
             case 0:
                 PrintFirstPage();
                 break;
@@ -256,20 +223,16 @@ void SwapPage(u8 taskId, u8 SwapDirection) {
             case 2:
             case 3:
             case 4:
-                PrintUnownList(taskId, PageNumber-1);
+                PrintUnownList(taskId, PageNumber);
                 break;
-            case 5:
-            case 6:
-            case 7:
-            case 8:
-            case 9:
-            case 10:
-                PrintReportPage(PageNumber - 5);
+            default:
+                PrintReportPage(PageNumber - FIRST_REPORT_PAGE);
                 break;
         }
+        PutWindowTilemap(0);
+        CopyWindowToVram(0, 3);
+        PlaySE(SE_SELECT);
     }
-    PutWindowTilemap(0);
-    CopyWindowToVram(0, 3);
 }
 
 void Task_UnownReportWaitForKeyPress(u8 taskId) {
@@ -302,6 +265,13 @@ void PrintUnownReportText(u8 *text, u8 x, u8 y) {
 }
 
 void UnownReport_Execute(bool8 src) {
+    VarSet(VAR_UNOWNCAUGHT_PT1, 0b1111111111111111);
+    VarSet(VAR_UNOWNCAUGHT_PT2, 0b1111111111111111);
+    FlagSet(FLAG_REPORT2);
+    FlagSet(FLAG_REPORT3);
+    FlagSet(FLAG_REPORT4);
+    FlagSet(FLAG_REPORT5);
+    FlagSet(FLAG_REPORT6);
     OpenedFromOW = src;
     SetMainCallback2(CB2_ShowUnownReport);
 }
