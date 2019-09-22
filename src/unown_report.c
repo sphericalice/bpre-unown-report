@@ -215,7 +215,7 @@ void SwapPage(u8 taskId, u8 SwapDirection) {
         PutWindowTilemap(0);
         CopyWindowToVram(0, 3);
 
-        PlaySE(SE_SELECT);
+        PlaySE(SE_SWAP_PAGE);
     }
 }
 
