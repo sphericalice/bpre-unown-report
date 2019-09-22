@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GUARD_STRINGS_H
+#define GUARD_STRINGS_H
 
 #include "constants/flags.h"
 
@@ -55,3 +56,5 @@ static const struct ReportPage ReportPages[] = {
 };
 
 #define LAST_PAGE (4 + (sizeof(ReportPages) / sizeof(struct ReportPage)))
+
+#endif // GUARD_STRINGS_H

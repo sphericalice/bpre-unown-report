@@ -1,13 +1,46 @@
+#include "global.h"
+#include "main.h"
+#include "macro.h"
+#include "gpu_regs.h"
+#include "scanline_effect.h"
+#include "task.h"
+#include "sprite.h"
+#include "palette.h"
+#include "alloc.h"
+#include "bg.h"
+#include "text_window.h"
+#include "text.h"
+#include "window.h"
+#include "rgb.h"
+#include "overworld.h"
+#include "sound.h"
+#include "menu.h"
+#include "script.h"
+#include "string_util.h"
+#include "international_string_util.h"
+#include "strings.h"
+#include "event_data.h"
+#include "decompress.h"
+#include "pokemon.h"
+#include "pokedex.h"
+#include "battle.h"
+#include "bag.h"
+#include "pokemon_icon.h"
+#include "constants/flags.h"
+#include "constants/vars.h"
+#include "constants/songs.h"
+#include "constants/species.h"
+#include "graphics/unown.c"
 #include "unown_report.h"
 
 void SetCaughtUnown(u16 UnownForm) {
     u32 CaughtUnown = GetCaughtUnown();
     CaughtUnown |= (1 << UnownForm);
     VarSet(VAR_UNOWNCAUGHT_PT1, (CaughtUnown & 0x0000FFFF));
-    VarSet(VAR_UNOWNCAUGHT_PT2, (CaughtUnown & 0xFFFF0000) >> 16);
+    VarSet(VAR_UNOWNCAUGHT_PT2, ((CaughtUnown & 0xFFFF0000) >> 16));
 }
 
-void atkF1_trysetcaughtmondexflags(void) {
+void atkF1_TrySetCaughtMonDexFlags(void) {
     u16 species = GetMonData(&gEnemyParty[0], MON_DATA_SPECIES, NULL);
     u32 personality = GetMonData(&gEnemyParty[0], MON_DATA_PERSONALITY, NULL);
 
@@ -33,13 +66,13 @@ u32 UnownFormToPID(u8 form) {
          | ((form & 0b00000011));
 }
 
-void DisplayUnownIcon(u8 form, u16 x, u16 y) {
+void PrintUnownIcon(u8 form, u16 x, u16 y) {
     u8 spriteId;
     LoadMonIconPalettes();
     spriteId = CreateMonIcon(SPECIES_UNOWN,
                              SpriteCallbackDummy,
-                             x,
-                             y,
+                             12 + x,
+                             52 + y,
                              0,
                              UnownFormToPID(form),
                              TRUE);
@@ -47,25 +80,27 @@ void DisplayUnownIcon(u8 form, u16 x, u16 y) {
 }
 
 void PrintUnown(u8 form, u8 row, u8 col) {
-    u16 x = 48 + col * 88;
-    u16 y = 48 + (row - col) * 12;
-    DisplayUnownIcon(form, x, y + 4);
+    u16 x = col * 88 + 36;
+    u16 y = (row - col) * 12;
+    PrintUnownIcon(form, x, y);
     PrintUnownReportText(UnownStrings[form], x, y);
 }
 
 u32 GetCaughtUnown(void) {
-    return VarGet(VAR_UNOWNCAUGHT_PT2) << 16 | VarGet(VAR_UNOWNCAUGHT_PT1);
+    return (VarGet(VAR_UNOWNCAUGHT_PT2) << 16) | VarGet(VAR_UNOWNCAUGHT_PT1);
 }
 
-bool8 UnownFormIsCaught(u8 form) {
+bool32 UnownFormIsCaught(u8 form) {
     u32 CaughtUnown = GetCaughtUnown();
-    return CaughtUnown & (1 << form);
+    return (CaughtUnown & (1 << form));
 }
 
 u8 UnownCount(void) {
     u8 UniqueForms = 0;
     for (u8 form = 0; form < UNOWN_FORMS; form++) {
-        if (UnownFormIsCaught(form)) UniqueForms++;
+        if (UnownFormIsCaught(form)) {
+            UniqueForms++;
+        }
     }
 
     return UniqueForms;
@@ -77,15 +112,16 @@ void PrintUnownReportText(const u8 *text, u8 x, u8 y) {
 }
 
 void PrintReportPage(u8 ReportPageNumber) {
-    PrintUnownReportText(ReportPages[ReportPageNumber].str, 16, 48);
+    PrintUnownReportText(ReportPages[ReportPageNumber].str, 0, 0);
 }
 
 void PrintUnownList(u8 taskId, u8 PageNumber) {
     struct Task *task = &gTasks[taskId];
 
     u8 bit = 0;
-    if (PageNumber > FIRST_UNOWN_LIST_PAGE)
+    if (PageNumber > FIRST_UNOWN_LIST_PAGE) {
         bit = task->bitToStartFrom[PageNumber];
+    }
 
     u8 row;
     u8 col;
@@ -97,14 +133,15 @@ void PrintUnownList(u8 taskId, u8 PageNumber) {
         }
     }
 
-    if (PageNumber < LAST_UNOWN_LIST_PAGE)
+    if (PageNumber < LAST_UNOWN_LIST_PAGE) {
         task->bitToStartFrom[PageNumber + 1] = bit;
+    }
 }
 
 void PrintFrontPage(void) {
     StringExpandPlaceholders(gStringVar4, gText_PlayersUnownReport);
     u16 width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
-    PrintUnownReportText(gStringVar4, 104 - (width >> 1), 48);
+    PrintUnownReportText(gStringVar4, 88 - (width >> 1), 0);
 
     ConvertIntToDecimalStringN(gStringVar1,
                                UnownCount(),
@@ -112,7 +149,7 @@ void PrintFrontPage(void) {
                                4);
     StringExpandPlaceholders(gStringVar4, gText_CurrentKinds);
     width = GetStringCenterAlignXOffset(2, gStringVar4, 0xFFFF);
-    PrintUnownReportText(gStringVar4, 104 - (width >> 1), 72);
+    PrintUnownReportText(gStringVar4, 88 - (width >> 1), 24);
 }
 
 u8 GetNewPage(u8 taskId, u8 SwapDirection) {
@@ -122,19 +159,23 @@ u8 GetNewPage(u8 taskId, u8 SwapDirection) {
 
     if (SwapDirection == PAGE_NEXT && PageNumber != LAST_PAGE) {
         if (PageNumber < FIRST_REPORT_PAGE
-            && count <= PageNumber * UNOWN_PER_PAGE)
+            && count <= PageNumber * UNOWN_PER_PAGE) {
             return FIRST_REPORT_PAGE;
+        }
 
         if (PageNumber >= FIRST_REPORT_PAGE
-            && !FlagGet(ReportPages[PageNumber - FIRST_REPORT_PAGE].flag))
+            && !FlagGet(ReportPages[PageNumber - FIRST_REPORT_PAGE].flag)) {
             return PageNumber;
+        }
 
         return PageNumber + 1;
     }
 
     if (SwapDirection == PAGE_PREV && PageNumber != FRONT_PAGE) {
-        if (PageNumber == FIRST_REPORT_PAGE)
+        if (count == 0) return FRONT_PAGE;
+        if (PageNumber == FIRST_REPORT_PAGE) {
             return 1 + ((count - 1) / UNOWN_PER_PAGE);
+        }
 
         return PageNumber - 1;
     }
@@ -150,10 +191,12 @@ void SwapPage(u8 taskId, u8 SwapDirection) {
 
     if (task->currentPage != PageNumber) {
         PageNumber = task->currentPage;
+
         ResetSpriteData();
         FillWindowPixelBuffer(0, 0);
         ClearWindowTilemap(0);
         CopyWindowToVram(0, 3);
+
         switch (PageNumber) {
             case FRONT_PAGE:
                 PrintFrontPage();
@@ -168,8 +211,10 @@ void SwapPage(u8 taskId, u8 SwapDirection) {
                 PrintReportPage(PageNumber - FIRST_REPORT_PAGE);
                 break;
         }
+
         PutWindowTilemap(0);
         CopyWindowToVram(0, 3);
+
         PlaySE(SE_SELECT);
     }
 }
@@ -189,11 +234,13 @@ void Task_UnownReportFadeOut(u8 taskId) {
 
 void Task_UnownReportWaitForKeyPress(u8 taskId) {
     if (gMain.newAndRepeatedKeys & (DPAD_RIGHT | DPAD_DOWN)
-        || gMain.newKeys & A_BUTTON)
+        || gMain.newKeys & A_BUTTON) {
         SwapPage(taskId, PAGE_NEXT);
+    }
 
-    if (gMain.newAndRepeatedKeys & (DPAD_LEFT | DPAD_UP))
+    if (gMain.newAndRepeatedKeys & (DPAD_LEFT | DPAD_UP)) {
         SwapPage(taskId, PAGE_PREV);
+    }
 
     if (gMain.newKeys & (B_BUTTON)) {
         BeginNormalPaletteFade(0xFFFFFFFF, 0, 0, 16, RGB_BLACK);
@@ -202,8 +249,9 @@ void Task_UnownReportWaitForKeyPress(u8 taskId) {
 }
 
 void Task_UnownReportFadeIn(u8 taskId) {
-    if (!gPaletteFade.active)
+    if (!gPaletteFade.active) {
         gTasks[taskId].func = Task_UnownReportWaitForKeyPress;
+    }
 }
 
 void PrintInstructionsBar(void) {

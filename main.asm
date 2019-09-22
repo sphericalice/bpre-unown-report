@@ -13,7 +13,7 @@
 
 // Update the move command which tries to set the Pokédex flag upon capture
 .org gMoveCommands + 0xF1 * SIZEOF_PTR
-.word atkF1_trysetcaughtmondexflags |1
+.word atkF1_TrySetCaughtMonDexFlags |1
 
 // Change the given item's Field Script to the Unown Report
 .org gItems + ITEM_UnownReport * SIZEOF_ITEM + FIELD_SCRIPT_OFFSET

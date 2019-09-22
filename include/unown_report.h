@@ -1,36 +1,5 @@
-#pragma once
-
-#include "global.h"
-#include "main.h"
-#include "gpu_regs.h"
-#include "macro.h"
-#include "scanline_effect.h"
-#include "task.h"
-#include "sprite.h"
-#include "palette.h"
-#include "alloc.h"
-#include "bg.h"
-#include "text_window.h"
-#include "text.h"
-#include "window.h"
-#include "rgb.h"
-#include "overworld.h"
-#include "sound.h"
-#include "menu.h"
-#include "script.h"
-#include "string_util.h"
-#include "international_string_util.h"
-#include "strings.h"
-#include "event_data.h"
-#include "decompress.h"
-#include "pokemon.h"
-#include "pokedex.h"
-#include "battle.h"
-#include "bag.h"
-#include "pokemon_icon.h"
-#include "constants/songs.h"
-#include "constants/species.h"
-#include "graphics/unown.c"
+#ifndef GUARD_UNOWN_REPORT_H
+#define GUARD_UNOWN_REPORT_H
 
 #define PAGE_NEXT 0
 #define PAGE_PREV 1
@@ -45,13 +14,16 @@
 #define currentPage data[0]
 #define bitToStartFrom data
 
+u8 *sTilemapBuffer;
+bool8 sOpenedFromOW;
+
 void SetCaughtUnown(u16 UnownForm);
-void atkF1_trysetcaughtmondexflags(void);
+void atkF1_TrySetCaughtMonDexFlags(void);
 u32 UnownFormToPID(u8 form);
-void DisplayUnownIcon(u8 form, u16 x, u16 y);
+void PrintUnownIcon(u8 form, u16 x, u16 y);
 void PrintUnown(u8 form, u8 row, u8 col);
 u32 GetCaughtUnown(void);
-bool8 UnownFormIsCaught(u8 form);
+bool32 UnownFormIsCaught(u8 form);
 u8 UnownCount(void);
 void PrintUnownReportText(const u8 *text, u8 x, u8 y);
 void PrintReportPage(u8 ReportPageNumber);
@@ -73,9 +45,6 @@ void UnownReport_Execute(bool8 src);
 void Task_UnownReportFromOW(u8 taskId);
 void StartUnownReportFromBag(void);
 void ItemUseOutOfBattle_UnownReport(u8 taskId);
-
-u8 *sTilemapBuffer;
-bool8 sOpenedFromOW;
 
 static const struct BgTemplate sUnownReportBgTemplates[3] = {
     { // Unown background
@@ -110,10 +79,10 @@ static const struct BgTemplate sUnownReportBgTemplates[3] = {
 static const struct WindowTemplate sUnownReportWinTemplates[3] = {
     { // Text
         .bg = 1,
-        .tilemapLeft = 2,
-        .tilemapTop = 0,
-        .width = 26,
-        .height = 18,
+        .tilemapLeft = 4,
+        .tilemapTop = 6,
+        .width = 22,
+        .height = 11,
         .paletteNum = 15,
         .baseBlock = 1
     },
@@ -137,3 +106,5 @@ static const u8 *UnownStrings[] = {
     gText_UnownU, gText_UnownV, gText_UnownW, gText_UnownX, gText_UnownY,
     gText_UnownZ, gText_UnownExclamationMark, gText_UnownQuestionMark
 };
+
+#endif // GUARD_UNOWN_REPORT_H
