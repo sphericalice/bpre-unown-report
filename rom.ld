@@ -101,6 +101,6 @@ sub_80CCB68 = 0x080CCB68|1;
 fade_screen = 0x0807A818|1;
 sub_80A1CC0 = 0x080A1CC0|1;
 overworld_free_bgmaps = 0x080563F0|1;
-sub_80A1184 = 0x080A1184|1;
+PrepareOverworldReturn = 0x080A1184|1;
 CB2_ReturnToBag = 0x08107EB8|1;
 OpenedFromOW = 0x020399D4;

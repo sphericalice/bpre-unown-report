@@ -54,4 +54,4 @@ static const struct ReportPage ReportPages[] = {
     { gText_Report6, FLAG_REPORT6 },
 };
 
-#define MAX_PAGE_COUNT (4 + (sizeof(ReportPages) / sizeof(struct ReportPage)))
+#define LAST_PAGE (4 + (sizeof(ReportPages) / sizeof(struct ReportPage)))

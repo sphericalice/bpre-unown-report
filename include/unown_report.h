@@ -26,6 +26,7 @@
 #include "pokemon.h"
 #include "pokedex.h"
 #include "battle.h"
+#include "bag.h"
 #include "pokemon_icon.h"
 #include "constants/songs.h"
 #include "constants/species.h"
@@ -33,52 +34,44 @@
 
 #define PAGE_NEXT 0
 #define PAGE_PREV 1
+#define FIRST_UNOWN_LIST_PAGE 1
+#define SECOND_UNOWN_LIST_PAGE 2
+#define THIRD_UNOWN_LIST_PAGE 3
+#define LAST_UNOWN_LIST_PAGE 4
 #define FIRST_REPORT_PAGE 5
 #define UNOWN_PER_PAGE 8
 #define UNOWN_FORMS 28
 #define currentPage data[0]
+#define bitToStartFrom data
 
-void sub_80A1184();
-void sub_80CCB68();
-void overworld_free_bgmaps();
-void fade_screen(u8,u8);
-TaskFunc sub_80A1CC0;
-void set_bag_callback(void *);
-void unknown_ItemMenu_Confirm(u8);
-bool8 OpenedFromOW;
-
+void SetCaughtUnown(u16 UnownForm);
 void atkF1_trysetcaughtmondexflags(void);
-void PrintUnownReportText(u8 *text, u8 x, u8 y);
+u32 UnownFormToPID(u8 form);
+void DisplayUnownIcon(u8 form, u16 x, u16 y);
+void PrintUnown(u8 form, u8 row, u8 col);
+u32 GetCaughtUnown(void);
+bool8 UnownFormIsCaught(u8 form);
+u8 UnownCount(void);
+void PrintUnownReportText(const u8 *text, u8 x, u8 y);
+void PrintReportPage(u8 ReportPageNumber);
+void PrintUnownList(u8 taskId, u8 PageNumber);
+void PrintFirstPage(void);
+u8 GetNewPage(u8 taskId, u8 SwapDirection);
+void SwapPage(u8 taskId, u8 SwapDirection);
 void Task_UnownReportFadeOut(u8 taskId);
 void Task_UnownReportWaitForKeyPress(u8 taskId);
-void SwapPage(u8 taskId, u8 SwapDirection);
-void PrintReportPage(u8 PageNumber);
-void PrintUnownList(u8 taskId, u8 PageNumber);
-void PrintUnown(u8 form, u8 row, u8 col);
-void DisplayUnownIcon(u8 form, u16 x, u16 y);
-u32 UnownFormToPID(u8 form);
-void PrintFirstPage(void);
-s8 GetPageNumber(u8 taskId, u8 SwapDirection);
-u8 GetPage(u8 taskId, u8 SwapDirection);
-u8 UnownCount(void);
-void SetCaughtUnown(u16 UnownForm);
-u32 GetCaughtUnown(void);
 void Task_UnownReportFadeIn(u8 taskId);
-void MainCB2(void);
-void CB2_ShowUnownReport(void);
-void InitUnownReportDisplay(void);
-void InitUnownReportWindow(void);
 void PrintInstructionsBar(void);
-void InitUnownReportBg(void);
+void MainCB2(void);
 void VBlankCB(void);
-
-void sub_80A1184();
-void sub_80CCB68();
-void overworld_free_bgmaps();
-void fade_screen(u8,u8);
-TaskFunc sub_80A1CC0;
-void set_bag_callback(void *);
-void unknown_ItemMenu_Confirm(u8);
+void InitUnownReportFirstPage(void);
+void InitUnownReportWindow(void);
+void InitUnownReportBg(void);
+void CB2_ShowUnownReport(void);
+void UnownReport_Execute(bool8 src);
+void Task_UnownReportFromOW(u8 taskId);
+void StartUnownReportFromBag(void);
+void ItemUseOutOfBattle_UnownReport(u8 taskId);
 
 u8 *sTilemapBuffer;
 bool8 OpenedFromOW;
