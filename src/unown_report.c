@@ -265,13 +265,6 @@ void PrintUnownReportText(u8 *text, u8 x, u8 y) {
 }
 
 void UnownReport_Execute(bool8 src) {
-    VarSet(VAR_UNOWNCAUGHT_PT1, 0b1111111111111111);
-    VarSet(VAR_UNOWNCAUGHT_PT2, 0b1111111111111111);
-    FlagSet(FLAG_REPORT2);
-    FlagSet(FLAG_REPORT3);
-    FlagSet(FLAG_REPORT4);
-    FlagSet(FLAG_REPORT5);
-    FlagSet(FLAG_REPORT6);
     OpenedFromOW = src;
     SetMainCallback2(CB2_ShowUnownReport);
 }
