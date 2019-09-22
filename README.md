@@ -78,9 +78,9 @@ Just edit the `unown.png` image directly in `include/graphics/`, save it, close 
 
 Of course, the usual restrictions for these types of tilemaps apply; this only uses one palette, so there is a limit of 15 colours plus transparency. I recommend keeping the size of 256x160, too, but bear in mind that only the leftmost 240 pixels are visible.
 
-#### How can I add extra pages to the Unown Report?
+#### How can I add extra report pages to the Unown Report?
 
-At the moment, the page system is pretty poorly coded, so expanding it will require a familiarity with C to simply edit the source yourself. (Hopefully it is readable enough, but I may revisit this in the future to refactor this aspect of the code.)
+New report pages can be added by adding new strings to the `src/strings.c`, adding their declaration in `include/strings.h`, and adding them to the `ReportPages[]` array in `include/strings.h`, along with the flag needed for the page to be unlocked. You can add new flags in `include/constants/flags.h`. As the page counter is an unsigned byte, the maximum number of report pages is 250 (with the other 5 pages being the first page and the 4 allocated for the list of Unown forms).
 
 ### Caveats
 
