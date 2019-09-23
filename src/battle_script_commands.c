@@ -1,6 +1,7 @@
 #include "global.h"
 #include "constants/species.h"
 #include "battle.h"
+#include "battle_script_commands.h"
 #include "pokedex.h"
 #include "pokemon.h"
 #include "pokemon_icon.h"

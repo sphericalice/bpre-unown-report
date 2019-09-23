@@ -1,0 +1,6 @@
+#ifndef GUARD_BATTLE_SCRIPT_COMMANDS_H
+#define GUARD_BATTLE_SCRIPT_COMMANDS_H
+
+void atkF1_TrySetCaughtMonDexFlags(void);
+
+#endif // GUARD_BATTLE_SCRIPT_COMMANDS_H

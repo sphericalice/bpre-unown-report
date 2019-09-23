@@ -18,7 +18,6 @@ u8 *sTilemapBuffer;
 bool8 sOpenedFromOW;
 
 void SetCaughtUnown(u16 UnownForm);
-void atkF1_TrySetCaughtMonDexFlags(void);
 u32 UnownFormToPID(u8 form);
 void PrintUnownIcon(u8 form, u16 x, u16 y);
 void PrintUnown(u8 form, u8 row, u8 col);
