@@ -1,11 +1,14 @@
 #include "global.h"
-#include "constants/species.h"
+
 #include "battle.h"
-#include "battle_script_commands.h"
 #include "pokedex.h"
 #include "pokemon.h"
 #include "pokemon_icon.h"
 #include "unown_report.h"
+
+#include "battle_script_commands.h"
+
+#include "constants/species.h"
 
 void atkF1_TrySetCaughtMonDexFlags(void) {
     u16 species = GetMonData(&gEnemyParty[0], MON_DATA_SPECIES, NULL);

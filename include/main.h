@@ -1,4 +1,5 @@
-#pragma once
+#ifndef GUARD_MAIN_H
+#define GUARD_MAIN_H
 
 typedef void (*MainCallback)(void);
 typedef void (*IntrCallback)(void);
@@ -40,3 +41,5 @@ struct Main
 struct Main gMain;
 void SetMainCallback2(MainCallback callback);
 void SetVBlankCallback(IntrCallback callback);
+
+#endif // GUARD_MAIN_H
