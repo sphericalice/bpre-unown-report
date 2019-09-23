@@ -34,6 +34,13 @@
 #include "graphics/unown.c"
 #include "unown_report.h"
 
+void SetCaughtUnown(u16 UnownForm) {
+    u32 CaughtUnown = GetCaughtUnown();
+    CaughtUnown |= (1 << UnownForm);
+    VarSet(VAR_UNOWNCAUGHT_PT1, (CaughtUnown & 0x0000FFFF));
+    VarSet(VAR_UNOWNCAUGHT_PT2, (CaughtUnown & 0xFFFF0000) >> 16);
+}
+
 void SetTradedMonPokedexFlags(u8 partyIdx) {
     struct Pokemon *mon = &gPlayerParty[partyIdx];
 
@@ -50,13 +57,6 @@ void SetTradedMonPokedexFlags(u8 partyIdx) {
         GetSetPokedexFlag(species, FLAG_SET_SEEN);
         HandleSetPokedexFlag(species, FLAG_SET_CAUGHT, personality);
     }
-}
-
-void SetCaughtUnown(u16 UnownForm) {
-    u32 CaughtUnown = GetCaughtUnown();
-    CaughtUnown |= (1 << UnownForm);
-    VarSet(VAR_UNOWNCAUGHT_PT1, (CaughtUnown & 0x0000FFFF));
-    VarSet(VAR_UNOWNCAUGHT_PT2, ((CaughtUnown & 0xFFFF0000) >> 16));
 }
 
 void atkF1_TrySetCaughtMonDexFlags(void) {
@@ -130,8 +130,8 @@ void PrintUnownReportText(const u8 *text, u8 x, u8 y) {
     AddTextPrinterParameterized4(0, 1, x, y, 0, 0, col, -1, text);
 }
 
-void PrintReportPage(u8 Reportpage) {
-    PrintUnownReportText(ReportPages[Reportpage].str, 0, 0);
+void PrintReportPage(u8 page) {
+    PrintUnownReportText(ReportPages[page].str, 0, 0);
 }
 
 void PrintUnownList(u8 taskId, u8 page) {

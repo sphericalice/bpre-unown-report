@@ -84,9 +84,11 @@ New report pages can be added by adding new strings to the `src/strings.c`, addi
 
 ### Caveats
 
-* This code alters the move command `0xF1`, which is called by the battle system upon a Pokémon's capture to try and set the Pokédex flags. If your ROM hack has already changed this function, you may need to add your changes from vanilla to the `atkF1_trysetcaughtmondexflags` function in `src/unown_report.c`.
+* This code alters the move command `0xF1`, which is called by the battle system upon a Pokémon's capture to try and set the Pokédex flags. If your ROM hack has already changed this function, you may need to add your changes from vanilla to the `atkF1_TrySetCaughtMonDexFlags` function in `src/unown_report.c`.
 
-* At the moment, this code does not register new Unown forms obtained through trading, `givepokemon`, Mystery Gift, or hatching from Eggs -- only those captured in battle. I will most likely update this with support for these methods of obtaining Unown eventually, though.
+* This code also alters the function which registers the Pokédex flags of traded Pokémon, so if your hack has edited this function already, you will need to add your changes to the function `SetTradedMonPokedexFlags` in `src/unown_report.c`.
+
+* At the moment, this code does not register new Unown forms obtained through `givepokemon`, Mystery Gift, or hatching from Eggs -- only those captured in battle or obtained via trades. I will most likely update this with support for these methods of obtaining Unown eventually, though.
 
 ### Credits
 

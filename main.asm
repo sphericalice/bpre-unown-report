@@ -11,6 +11,13 @@
     .importobj "build/linked.o"
 .endarea
 
+// Hook the function which sets the Pokédex flags for traded Pokémon
+.org 0x080507A0
+ldr r1, =(SetTradedMonPokedexFlags|1 & 0x1FFFFFF)
+bx r1
+
+.pool
+
 // Update the move command which tries to set the Pokédex flag upon capture
 .org gMoveCommands + 0xF1 * SIZEOF_PTR
 .word atkF1_TrySetCaughtMonDexFlags |1
@@ -18,9 +25,6 @@
 // Change the given item's Field Script to the Unown Report
 .org gItems + ITEM_UnownReport * SIZEOF_ITEM + FIELD_SCRIPT_OFFSET
 .word ItemUseOutOfBattle_UnownReport |1
-
-// .org 0x080508BA
-// bl SetTradedMonPokedexFlags
 
 .close
 
