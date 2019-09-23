@@ -19,6 +19,9 @@
 .org gItems + ITEM_UnownReport * SIZEOF_ITEM + FIELD_SCRIPT_OFFSET
 .word ItemUseOutOfBattle_UnownReport |1
 
+// .org 0x080508BA
+// bl SetTradedMonPokedexFlags
+
 .close
 
 .definelabel gItems, readu32("rom.gba", 0x080001C8 & 0x1FFFFFF)

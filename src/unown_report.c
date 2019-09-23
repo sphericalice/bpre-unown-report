@@ -26,12 +26,31 @@
 #include "battle.h"
 #include "bag.h"
 #include "pokemon_icon.h"
+#include "trade.h"
 #include "constants/flags.h"
 #include "constants/vars.h"
 #include "constants/songs.h"
 #include "constants/species.h"
 #include "graphics/unown.c"
 #include "unown_report.h"
+
+void SetTradedMonPokedexFlags(u8 partyIdx) {
+    struct Pokemon *mon = &gPlayerParty[partyIdx];
+
+    if (!GetMonData(mon, MON_DATA_IS_EGG))
+    {
+        u16 species = GetMonData(mon, MON_DATA_SPECIES, NULL);
+        u32 personality = GetMonData(mon, MON_DATA_PERSONALITY, NULL);
+
+        if (species == SPECIES_UNOWN) {
+            SetCaughtUnown(GetUnownLetterByPersonality(personality));
+        }
+
+        species = SpeciesToNationalPokedexNum(species);
+        GetSetPokedexFlag(species, FLAG_SET_SEEN);
+        HandleSetPokedexFlag(species, FLAG_SET_CAUGHT, personality);
+    }
+}
 
 void SetCaughtUnown(u16 UnownForm) {
     u32 CaughtUnown = GetCaughtUnown();
@@ -48,11 +67,11 @@ void atkF1_TrySetCaughtMonDexFlags(void) {
         SetCaughtUnown(GetUnownLetterByPersonality(personality));
     }
 
-    u16 dexNum = SpeciesToNationalPokedexNum(species);
-    if (GetSetPokedexFlag(dexNum, FLAG_GET_CAUGHT)) {
+    species = SpeciesToNationalPokedexNum(species);
+    if (GetSetPokedexFlag(species, FLAG_GET_CAUGHT)) {
         gBattlescriptCurrInstr = T1_READ_PTR(gBattlescriptCurrInstr + 1);
     } else {
-        HandleSetPokedexFlag(dexNum, FLAG_SET_CAUGHT, personality);
+        HandleSetPokedexFlag(species, FLAG_SET_CAUGHT, personality);
         gBattlescriptCurrInstr += 5;
     }
 }
@@ -111,16 +130,16 @@ void PrintUnownReportText(const u8 *text, u8 x, u8 y) {
     AddTextPrinterParameterized4(0, 1, x, y, 0, 0, col, -1, text);
 }
 
-void PrintReportPage(u8 ReportPageNumber) {
-    PrintUnownReportText(ReportPages[ReportPageNumber].str, 0, 0);
+void PrintReportPage(u8 Reportpage) {
+    PrintUnownReportText(ReportPages[Reportpage].str, 0, 0);
 }
 
-void PrintUnownList(u8 taskId, u8 PageNumber) {
+void PrintUnownList(u8 taskId, u8 page) {
     struct Task *task = &gTasks[taskId];
 
     u8 bit = 0;
-    if (PageNumber > FIRST_UNOWN_LIST_PAGE) {
-        bit = task->bitToStartFrom[PageNumber];
+    if (page > FIRST_UNOWN_LIST_PAGE) {
+        bit = task->bitToStartFrom[page];
     }
 
     u8 row;
@@ -133,8 +152,8 @@ void PrintUnownList(u8 taskId, u8 PageNumber) {
         }
     }
 
-    if (PageNumber < LAST_UNOWN_LIST_PAGE) {
-        task->bitToStartFrom[PageNumber + 1] = bit;
+    if (page < LAST_UNOWN_LIST_PAGE) {
+        task->bitToStartFrom[page + 1] = bit;
     }
 }
 
@@ -154,50 +173,51 @@ void PrintFrontPage(void) {
 
 u8 GetNewPage(u8 taskId, u8 SwapDirection) {
     struct Task *task = &gTasks[taskId];
-    u8 PageNumber = task->currentPage;
+    u8 page = task->currentPage;
     u8 count = UnownCount();
 
-    if (SwapDirection == PAGE_NEXT && PageNumber != LAST_PAGE) {
-        if (PageNumber < FIRST_REPORT_PAGE
-            && count <= PageNumber * UNOWN_PER_PAGE) {
-            return FIRST_REPORT_PAGE;
+    if (SwapDirection == PAGE_NEXT && page < LAST_PAGE) {
+        if (page < FIRST_REPORT_PAGE) {
+            if (count <= page * UNOWN_PER_PAGE) {
+                return FIRST_REPORT_PAGE;
+            }
+        } else if (!FlagGet(ReportPages[page - FIRST_REPORT_PAGE].flag)) {
+            return page;
         }
 
-        if (PageNumber >= FIRST_REPORT_PAGE
-            && !FlagGet(ReportPages[PageNumber - FIRST_REPORT_PAGE].flag)) {
-            return PageNumber;
-        }
-
-        return PageNumber + 1;
+        return page + 1;
     }
 
-    if (SwapDirection == PAGE_PREV && PageNumber != FRONT_PAGE) {
-        if (count == 0) return FRONT_PAGE;
-        if (PageNumber == FIRST_REPORT_PAGE) {
+    if (SwapDirection == PAGE_PREV && page > FRONT_PAGE) {
+        if (count == 0) {
+            return FRONT_PAGE;
+        }
+
+        if (page == FIRST_REPORT_PAGE) {
             return 1 + ((count - 1) / UNOWN_PER_PAGE);
         }
 
-        return PageNumber - 1;
+        return page - 1;
     }
 
-    return PageNumber;
+    return page;
 }
 
 void SwapPage(u8 taskId, u8 SwapDirection) {
     struct Task *task = &gTasks[taskId];
 
-    u8 PageNumber = task->currentPage;
+    u8 page = task->currentPage;
     task->currentPage = GetNewPage(taskId, SwapDirection);
 
-    if (task->currentPage != PageNumber) {
-        PageNumber = task->currentPage;
+    if (task->currentPage != page) {
+        page = task->currentPage;
 
         ResetSpriteData();
         FillWindowPixelBuffer(0, 0);
         ClearWindowTilemap(0);
         CopyWindowToVram(0, 3);
 
-        switch (PageNumber) {
+        switch (page) {
             case FRONT_PAGE:
                 PrintFrontPage();
                 break;
@@ -205,10 +225,10 @@ void SwapPage(u8 taskId, u8 SwapDirection) {
             case SECOND_UNOWN_LIST_PAGE:
             case THIRD_UNOWN_LIST_PAGE:
             case LAST_UNOWN_LIST_PAGE:
-                PrintUnownList(taskId, PageNumber);
+                PrintUnownList(taskId, page);
                 break;
             default:
-                PrintReportPage(PageNumber - FIRST_REPORT_PAGE);
+                PrintReportPage(page - FIRST_REPORT_PAGE);
                 break;
         }
 
@@ -262,50 +282,47 @@ void PrintInstructionsBar(void) {
     CopyWindowToVram(1, 3);
 }
 
-void MainCB2(void) {
+void MainCB2_UnownReport(void) {
     RunTasks();
     AnimateSprites();
     BuildOamBuffer();
     UpdatePaletteFade();
 }
 
-void VBlankCB(void) {
+void VBlankCB_UnownReport(void) {
     LoadOam();
     ProcessSpriteCopyRequests();
     TransferPlttBuffer();
 }
 
 void InitUnownReportFrontPage(void) {
+    FillWindowPixelBuffer(0, PIXEL_FILL(0));
     PrintInstructionsBar();
     PrintFrontPage();
     PutWindowTilemap(0);
     CopyWindowToVram(0, 3);
 }
 
-void InitUnownReportWindow(void) {
-    InitWindows(sUnownReportWinTemplates);
-    DeactivateAllTextPrinters();
-    LoadPalette(unownPal, 0xC0, 0x20);
-    FillWindowPixelBuffer(0, PIXEL_FILL(0));
-    PutWindowTilemap(0);
+void LoadUnownReportGfx(void) {
+    DecompressAndCopyTileDataToVram(2, &unownTiles, 0, 0, 0);
+    LZDecompressWram(unownMap, sTilemapBuffer);
+    LoadPalette(unownPal, 0, 0x20);
 }
 
-void InitUnownReportBg(void) {
-    ResetBgsAndClearDma3BusyFlags(0);
-    InitBgsFromTemplates(0, sUnownReportBgTemplates, 3);
-    SetBgTilemapBuffer(2, sTilemapBuffer);
+void ClearTasksAndGraphicalStructs(void) {
+    ScanlineEffect_Stop();
+    ResetTasks();
+    ResetSpriteData();
+    ResetTempTileDataBuffers();
+    ResetPaletteFade();
+    FreeAllSpritePalettes();
+}
+
+void ClearVramOamPlttRegs(void) {
+    DmaFill16(3, 0, VRAM, VRAM_SIZE);
+    DmaFill32(3, 0, OAM, OAM_SIZE);
+    DmaFill16(3, 0, PLTT, PLTT_SIZE);
     SetGpuReg(REG_OFFSET_DISPCNT, DISPCNT_OBJ_ON | DISPCNT_OBJ_1D_MAP);
-    ShowBg(0);
-    ShowBg(1);
-    ShowBg(2);
-    SetGpuReg(REG_OFFSET_BLDCNT, DISPCNT_MODE_0);
-    SetGpuReg(REG_OFFSET_BLDALPHA, DISPCNT_MODE_0);
-    SetGpuReg(REG_OFFSET_BLDY, DISPCNT_MODE_0);
-}
-
-void CB2_ShowUnownReport(void) {
-    SetVBlankCallback(NULL);
-    SetGpuReg(REG_OFFSET_DISPCNT, DISPCNT_MODE_0);
     SetGpuReg(REG_OFFSET_BG3CNT, DISPCNT_MODE_0);
     SetGpuReg(REG_OFFSET_BG2CNT, DISPCNT_MODE_0);
     SetGpuReg(REG_OFFSET_BG1CNT, DISPCNT_MODE_0);
@@ -318,35 +335,63 @@ void CB2_ShowUnownReport(void) {
     SetGpuReg(REG_OFFSET_BG1VOFS, DISPCNT_MODE_0);
     SetGpuReg(REG_OFFSET_BG0HOFS, DISPCNT_MODE_0);
     SetGpuReg(REG_OFFSET_BG0VOFS, DISPCNT_MODE_0);
-    DmaFill16(3, 0, VRAM, VRAM_SIZE);
-    DmaFill32(3, 0, OAM, OAM_SIZE);
-    DmaFill16(3, 0, PLTT, PLTT_SIZE);
-    ScanlineEffect_Stop();
-    ResetTasks();
-    ResetSpriteData();
-    ResetPaletteFade();
-    FreeAllSpritePalettes();
-    LoadPalette(unownPal, 0, 64);
-    sTilemapBuffer = Alloc(0x1000);
-    InitUnownReportBg();
-    InitUnownReportWindow();
-    ResetTempTileDataBuffers();
-    DecompressAndCopyTileDataToVram(2, &unownTiles, 0, 0, 0);
-    while (TryToFreeTempTileDataBuffers());
-    LZDecompressWram(unownMap, sTilemapBuffer);
-    CopyBgTilemapBufferToVram(2);
-    InitUnownReportFrontPage();
-    BlendPalettes(-1, 16, 0);
-    BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB_BLACK);
-    EnableInterrupts(1);
-    SetVBlankCallback(VBlankCB);
-    SetMainCallback2(MainCB2);
-    CreateTask(Task_UnownReportFadeIn, 0);
+}
+
+void CB2_UnownReport(void) {
+    if (gMain.state <= 7) {
+        switch (gMain.state) {
+            case 0:
+                SetVBlankCallback(NULL);
+                ClearVramOamPlttRegs();
+                gMain.state++;
+                break;
+            case 1:
+                ClearTasksAndGraphicalStructs();
+                gMain.state++;
+                break;
+            case 2:
+                sTilemapBuffer = Alloc(0x1000);
+                ResetBgsAndClearDma3BusyFlags(0);
+                InitBgsFromTemplates(0, sUnownReportBgTemplates, 3);
+                SetBgTilemapBuffer(2, sTilemapBuffer);
+                gMain.state++;
+                break;
+            case 3:
+                LoadUnownReportGfx();
+                gMain.state++;
+                break;
+            case 4:
+                if (IsDma3ManagerBusyWithBgCopy() != TRUE) {
+                    ShowBg(0);
+                    ShowBg(1);
+                    ShowBg(2);
+                    CopyBgTilemapBufferToVram(2);
+                    gMain.state++;
+                }
+                break;
+            case 5:
+                InitWindows(sUnownReportWinTemplates);
+                DeactivateAllTextPrinters();
+                gMain.state++;
+                break;
+            case 6:
+                BeginNormalPaletteFade(0xFFFFFFFF, 0, 16, 0, RGB_BLACK);
+                gMain.state++;
+                break;
+            case 7:
+                SetVBlankCallback(VBlankCB_UnownReport);
+                InitUnownReportFrontPage();
+                CreateTask(Task_UnownReportFadeIn, 0);
+                SetMainCallback2(MainCB2_UnownReport);
+                gMain.state = 0;
+                break;
+        }
+    }
 }
 
 void UnownReport_Execute(bool8 src) {
     sOpenedFromOW = src;
-    SetMainCallback2(CB2_ShowUnownReport);
+    SetMainCallback2(CB2_UnownReport);
 }
 
 void Task_UnownReportFromOW(u8 taskId) {
