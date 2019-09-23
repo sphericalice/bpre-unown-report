@@ -46,6 +46,15 @@ extern const u8 gText_Report4[];
 extern const u8 gText_Report5[];
 extern const u8 gText_Report6[];
 
+static const u8 *UnownStrings[] = {
+    gText_UnownA, gText_UnownB, gText_UnownC, gText_UnownD, gText_UnownE,
+    gText_UnownF, gText_UnownG, gText_UnownH, gText_UnownI, gText_UnownJ,
+    gText_UnownK, gText_UnownL, gText_UnownM, gText_UnownN, gText_UnownO,
+    gText_UnownP, gText_UnownQ, gText_UnownR, gText_UnownS, gText_UnownT,
+    gText_UnownU, gText_UnownV, gText_UnownW, gText_UnownX, gText_UnownY,
+    gText_UnownZ, gText_UnownExclamationMark, gText_UnownQuestionMark
+};
+
 static const struct ReportPage ReportPages[] = {
     { gText_Report1, FLAG_REPORT2 }, // 1st report page flag isn't checked
     { gText_Report2, FLAG_REPORT2 },

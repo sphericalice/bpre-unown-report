@@ -15,7 +15,6 @@
 .org 0x080507A0
 ldr r1, =(SetTradedMonPokedexFlags|1 & 0x1FFFFFF)
 bx r1
-
 .pool
 
 // Update the move command which tries to set the Pokédex flag upon capture

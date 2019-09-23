@@ -7,10 +7,8 @@
 #include "sprite.h"
 #include "palette.h"
 #include "alloc.h"
-#include "bg.h"
 #include "text_window.h"
 #include "text.h"
-#include "window.h"
 #include "rgb.h"
 #include "overworld.h"
 #include "sound.h"
@@ -27,6 +25,8 @@
 #include "bag.h"
 #include "pokemon_icon.h"
 #include "trade.h"
+#include "window.h"
+#include "bg.h"
 #include "constants/flags.h"
 #include "constants/vars.h"
 #include "constants/songs.h"
@@ -34,46 +34,63 @@
 #include "graphics/unown.c"
 #include "unown_report.h"
 
+static const struct BgTemplate sUnownReportBgTemplates[3] = {
+    { // Unown background
+        .bg = 2,
+        .charBaseIndex = 0,
+        .mapBaseIndex = 31,
+        .screenSize = 0,
+        .paletteMode = 0,
+        .priority = 2,
+        .baseTile = 0,
+    },
+    { // Text
+        .bg = 1,
+        .charBaseIndex = 2,
+        .mapBaseIndex = 6,
+        .screenSize = 0,
+        .paletteMode = 0,
+        .priority = 1,
+        .baseTile = 0,
+    },
+    { // Instructions
+        .bg = 0,
+        .charBaseIndex = 1,
+        .mapBaseIndex = 24,
+        .screenSize = 0,
+        .paletteMode = 0,
+        .priority = 0,
+        .baseTile = 0,
+    }
+};
+
+static const struct WindowTemplate sUnownReportWinTemplates[3] = {
+    { // Text
+        .bg = 1,
+        .tilemapLeft = 4,
+        .tilemapTop = 6,
+        .width = 22,
+        .height = 11,
+        .paletteNum = 15,
+        .baseBlock = 1
+    },
+    { // Instructions
+        .bg = 0,
+        .tilemapLeft = 0,
+        .tilemapTop = 0,
+        .width = 30,
+        .height = 2,
+        .paletteNum = 15,
+        .baseBlock = 1
+    },
+    DUMMY_WIN_TEMPLATE
+};
+
 void SetCaughtUnown(u16 UnownForm) {
     u32 CaughtUnown = GetCaughtUnown();
     CaughtUnown |= (1 << UnownForm);
     VarSet(VAR_UNOWNCAUGHT_PT1, (CaughtUnown & 0x0000FFFF));
     VarSet(VAR_UNOWNCAUGHT_PT2, (CaughtUnown & 0xFFFF0000) >> 16);
-}
-
-void SetTradedMonPokedexFlags(u8 partyIdx) {
-    struct Pokemon *mon = &gPlayerParty[partyIdx];
-
-    if (!GetMonData(mon, MON_DATA_IS_EGG))
-    {
-        u16 species = GetMonData(mon, MON_DATA_SPECIES, NULL);
-        u32 personality = GetMonData(mon, MON_DATA_PERSONALITY, NULL);
-
-        if (species == SPECIES_UNOWN) {
-            SetCaughtUnown(GetUnownLetterByPersonality(personality));
-        }
-
-        species = SpeciesToNationalPokedexNum(species);
-        GetSetPokedexFlag(species, FLAG_SET_SEEN);
-        HandleSetPokedexFlag(species, FLAG_SET_CAUGHT, personality);
-    }
-}
-
-void atkF1_TrySetCaughtMonDexFlags(void) {
-    u16 species = GetMonData(&gEnemyParty[0], MON_DATA_SPECIES, NULL);
-    u32 personality = GetMonData(&gEnemyParty[0], MON_DATA_PERSONALITY, NULL);
-
-    if (species == SPECIES_UNOWN) {
-        SetCaughtUnown(GetUnownLetterByPersonality(personality));
-    }
-
-    species = SpeciesToNationalPokedexNum(species);
-    if (GetSetPokedexFlag(species, FLAG_GET_CAUGHT)) {
-        gBattlescriptCurrInstr = T1_READ_PTR(gBattlescriptCurrInstr + 1);
-    } else {
-        HandleSetPokedexFlag(species, FLAG_SET_CAUGHT, personality);
-        gBattlescriptCurrInstr += 5;
-    }
 }
 
 u32 UnownFormToPID(u8 form) {
