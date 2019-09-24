@@ -1,6 +1,6 @@
 ## Unown Report
 
-![](http://sphericalice.com/romhacking/hacks/gaia/screenshots/unown_report.gif)
+![](/unown_report.gif)
 
 The Johto-based games introduced an item called the [Unown Report](https://bulbapedia.bulbagarden.net/wiki/Unown_Report), which logs the Unown forms you have captured, and logs the player's research into the Ruins of Alph as they progress through the quest.
 
