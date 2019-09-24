@@ -36,7 +36,7 @@ The build system is smart enough to find enough free space on its own, but if yo
 
 If the given address is acceptable (i.e. is word-aligned and has enough bytes of free space), it will be inserted there. Otherwise, it will just use `START_AT` to determine where in the ROM it should start looking for free space.
 
-The code automatically sets the Field Script for the Unown Report to point to the correct function. You must therefore configure the item's index by simply setting the `ITEM_UnownReport` field in `config.mk` to the desired item ID. By default, it is `0x15D`, which is `OAK'S PARCEL` in an unedited FireRed ROM.
+The code automatically sets the Field Script for the Unown Report to point to the correct function. You must therefore configure the item's index by simply setting the `ITEM_UnownReport` field in `config.mk` to the desired item ID. This repository lists the item ID used for Pokémon Gaia, which is `0x182`, so you will likely have to change this as it may not be a valid item ID for your ROM.
 
 See the Usage section below for information on how the item should be configured.
 
