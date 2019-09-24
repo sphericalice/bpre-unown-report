@@ -127,8 +127,6 @@ void PrintUnown(u8 form, u8 row, u8 col) {
 }
 
 u32 GetCaughtUnown(void) {
-    VarSet(VAR_UNOWNCAUGHT_PT1, 0b1111111111111111);
-    VarSet(VAR_UNOWNCAUGHT_PT2, 0b1111111111111111);
     return (VarGet(VAR_UNOWNCAUGHT_PT2) << 16) | VarGet(VAR_UNOWNCAUGHT_PT1);
 }
 

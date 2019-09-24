@@ -55,21 +55,13 @@ static const u8 *UnownStrings[] = {
     gText_UnownZ, gText_UnownExclamationMark, gText_UnownQuestionMark
 };
 
-// static const struct ReportPage ReportPages[] = {
-    // { gText_Report1, FLAG_REPORT2 }, // 1st report page flag isn't checked
-    // { gText_Report2, FLAG_REPORT2 },
-    // { gText_Report3, FLAG_REPORT3 },
-    // { gText_Report4, FLAG_REPORT4 },
-    // { gText_Report5, FLAG_REPORT5 },
-    // { gText_Report6, FLAG_REPORT6 },
-// };
 static const struct ReportPage ReportPages[] = {
-    { gText_Report1, 0x828 }, // 1st report page flag isn't checked
-    { gText_Report2, 0x828 },
-    { gText_Report3, 0x828 },
-    { gText_Report4, 0x828 },
-    { gText_Report5, 0x828 },
-    { gText_Report6, 0x828 },
+    { gText_Report1, FLAG_REPORT2 }, // 1st report page flag isn't checked
+    { gText_Report2, FLAG_REPORT2 },
+    { gText_Report3, FLAG_REPORT3 },
+    { gText_Report4, FLAG_REPORT4 },
+    { gText_Report5, FLAG_REPORT5 },
+    { gText_Report6, FLAG_REPORT6 },
 };
 
 #define LAST_PAGE (4 + (sizeof(ReportPages) / sizeof(struct ReportPage)))
