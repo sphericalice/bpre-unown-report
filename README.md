@@ -90,6 +90,8 @@ New report pages can be added by adding new strings to the `src/strings.c`, addi
 
 * At the moment, this code does not register new Unown forms obtained through `givepokemon`, Mystery Gift, or hatching from Eggs -- only those captured in battle or obtained via trades. I will most likely update this with support for these methods of obtaining Unown eventually, though.
 
+* Save files from before this was added will not have Unown forms registered even if the player has already captured them, but will register the player if they catch them again.
+
 ### Credits
 
 Project structure, `preproc`, and `scaninc` are all from [pokeemerald](https://github.com/pret/pokeemerald).
