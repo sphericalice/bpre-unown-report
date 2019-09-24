@@ -7,6 +7,7 @@
 #include "event_data.h"
 #include "gpu_regs.h"
 #include "international_string_util.h"
+#include "list_menu.h"
 #include "main.h"
 #include "overworld.h"
 #include "palette.h"
@@ -96,6 +97,15 @@ u32 UnownFormToPID(u8 form) {
 
 void PrintUnownIcon(u8 form, u16 x, u16 y) {
     u8 spriteId;
+    u8 unownTag = form + 2;
+    for (spriteId = 0; spriteId < 30; spriteId++) {
+        struct Sprite *sprite = &gSprites[spriteId];
+        if (sprite->data[0] == unownTag) {
+            sprite->invisible = FALSE;
+            return;
+        }
+    }
+    spriteId = 0;
     LoadMonIconPalettes();
     spriteId = CreateMonIcon(SPECIES_UNOWN,
                              SpriteCallbackDummy,
@@ -105,6 +115,8 @@ void PrintUnownIcon(u8 form, u16 x, u16 y) {
                              UnownFormToPID(form),
                              TRUE);
     gSprites[spriteId].oam.priority = 0;
+    gSprites[spriteId].invisible = FALSE;
+    gSprites[spriteId].data[0] = unownTag;
 }
 
 void PrintUnown(u8 form, u8 row, u8 col) {
@@ -180,9 +192,14 @@ void PrintFrontPage(void) {
     PrintUnownReportText(gStringVar4, 88 - (width >> 1), 24);
 }
 
-u8 GetNewPage(u8 taskId, u8 SwapDirection) {
-    struct Task *task = &gTasks[taskId];
-    u8 page = task->currentPage;
+void RemoveUnownIconSprites(void) {
+    for (u8 spriteId = 0; spriteId < 30; spriteId++) {
+        struct Sprite *sprite = &gSprites[spriteId];
+        if (sprite->data[0] != 0) sprite->invisible = TRUE;
+    }
+}
+
+u8 GetNewPage(u8 page, u8 SwapDirection) {
     u8 count = UnownCount();
 
     if (SwapDirection == PAGE_NEXT && page < LAST_PAGE) {
@@ -216,15 +233,15 @@ void SwapPage(u8 taskId, u8 SwapDirection) {
     struct Task *task = &gTasks[taskId];
 
     u8 page = task->currentPage;
-    task->currentPage = GetNewPage(taskId, SwapDirection);
+    task->currentPage = GetNewPage(task->currentPage, SwapDirection);
 
     if (task->currentPage != page) {
         page = task->currentPage;
 
-        ResetSpriteData();
         FillWindowPixelBuffer(0, 0);
         ClearWindowTilemap(0);
         CopyWindowToVram(0, 3);
+        RemoveUnownIconSprites();
 
         switch (page) {
             case FRONT_PAGE:
@@ -243,8 +260,22 @@ void SwapPage(u8 taskId, u8 SwapDirection) {
 
         PutWindowTilemap(0);
         CopyWindowToVram(0, 3);
-
         PlaySE(SE_SWAP_PAGE);
+
+        if (page == FRONT_PAGE) {
+            RemoveScrollIndicatorArrowPair(task->data[10]);
+            task->data[8] = 1;
+            task->data[10] = AddScrollIndicatorArrowPairParameterized(0, 88, -1, 224, 1, 110, 110, 0);
+        } else if (GetNewPage(page, PAGE_NEXT) == page) {
+            RemoveScrollIndicatorArrowPair(task->data[10]);
+            task->data[8] = 1;
+            task->data[10] = AddScrollIndicatorArrowPairParameterized(0, 88, 16, -1, 1, 110, 110, 0);
+        } else {
+            RemoveScrollIndicatorArrowPair(task->data[10]);
+            task->data[8] = 1;
+            task->data[10] = AddScrollIndicatorArrowPairParameterized(0, 88, 16, 224, 1, 110, 110, 0);
+        }
+
     }
 }
 
@@ -279,7 +310,13 @@ void Task_UnownReportWaitForKeyPress(u8 taskId) {
 
 void Task_UnownReportFadeIn(u8 taskId) {
     if (!gPaletteFade.active) {
+        struct Task *task = &gTasks[taskId];
+
+        task->data[8] = 1;
+        task->data[10] = AddScrollIndicatorArrowPairParameterized(0, 88, -1, 224, 1, 110, 110, 0);
+
         gTasks[taskId].func = Task_UnownReportWaitForKeyPress;
+
     }
 }
 
