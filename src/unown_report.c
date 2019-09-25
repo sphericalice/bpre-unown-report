@@ -199,37 +199,47 @@ void RemoveUnownIconSprites(void) {
     }
 }
 
-u8 GetNewPage(u8 page, u8 SwapDirection) {
+u8 GetNewPage(u8 page, s8 SwapDirection) {
+    // This function is so ugly, I'm sorry
     u8 count = UnownCount();
 
     if (SwapDirection == PAGE_NEXT && page < LAST_PAGE) {
         if (page < FIRST_REPORT_PAGE) {
             if (count <= page * UNOWN_PER_PAGE) {
                 return FIRST_REPORT_PAGE;
+            } else {
+                return page + SwapDirection;
             }
-        } else if (!FlagGet(ReportPages[page - FIRST_REPORT_PAGE].flag)) {
-            return page;
+        } else {
+            for (u8 reportPage = page + SwapDirection; reportPage <= LAST_PAGE; reportPage += SwapDirection) {
+                if (FlagGet(ReportPages[reportPage - FIRST_REPORT_PAGE].flag)) {
+                    return reportPage;
+                }
+            }
         }
-
-        return page + 1;
     }
 
     if (SwapDirection == PAGE_PREV && page > FRONT_PAGE) {
-        if (count == 0) {
-            return FRONT_PAGE;
-        }
-
         if (page == FIRST_REPORT_PAGE) {
-            return 1 + ((count - 1) / UNOWN_PER_PAGE);
+            if (count == 0) {
+                return FRONT_PAGE;
+            } else {
+                return 1 + ((count - 1) / UNOWN_PER_PAGE);
+            }
+        } else if (page > FIRST_REPORT_PAGE) {
+            for (u8 reportPage = page + SwapDirection; reportPage >= FIRST_REPORT_PAGE; reportPage += SwapDirection) {
+                if (FlagGet(ReportPages[reportPage - FIRST_REPORT_PAGE].flag)) {
+                    return reportPage;
+                }
+            }
         }
-
-        return page - 1;
+        return page + SwapDirection;
     }
 
     return page;
 }
 
-void SwapPage(u8 taskId, u8 SwapDirection) {
+void SwapPage(u8 taskId, s8 SwapDirection) {
     struct Task *task = &gTasks[taskId];
 
     u8 page = task->currentPage;

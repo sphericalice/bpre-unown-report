@@ -1,8 +1,8 @@
 #ifndef GUARD_UNOWN_REPORT_H
 #define GUARD_UNOWN_REPORT_H
 
-#define PAGE_NEXT 0
-#define PAGE_PREV 1
+#define PAGE_PREV -1
+#define PAGE_NEXT 1
 #define FRONT_PAGE 0
 #define FIRST_UNOWN_LIST_PAGE 1
 #define SECOND_UNOWN_LIST_PAGE 2
@@ -29,8 +29,8 @@ void PrintReportPage(u8 ReportPageNumber);
 void PrintUnownList(u8 taskId, u8 PageNumber);
 void PrintFrontPage(void);
 void RemoveUnownIconSprites(void);
-u8 GetNewPage(u8 page, u8 SwapDirection);
-void SwapPage(u8 taskId, u8 SwapDirection);
+u8 GetNewPage(u8 page, s8 SwapDirection);
+void SwapPage(u8 taskId, s8 SwapDirection);
 void Task_UnownReportFadeOut(u8 taskId);
 void Task_UnownReportWaitForKeyPress(u8 taskId);
 void Task_UnownReportFadeIn(u8 taskId);
