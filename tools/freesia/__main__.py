@@ -24,6 +24,7 @@ def find_needed_bytes(rom, needed_bytes, start_at):
         return 0
 
     needed_words = round_up_to_4(needed_bytes) >> 2
+    start_at = round_up_to_4(start_at)
     
     with open(rom, "rb") as rom:
         rom.seek(start_at)
